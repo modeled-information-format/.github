@@ -2,13 +2,19 @@
 name: attest-release
 
 # Every release in this org is attested — even a source archive. This packages
-# the repo at the release tag as a tarball, generates a CycloneDX SBOM, and binds
+# the repo at the release tag as a tarball, generates a CycloneDX SBOM, binds
 # SLSA build provenance + the SBOM to the tarball's sha256 digest (keyless, via
-# the run's OIDC id-token), then uploads the artifact + SBOM to the release. The
-# attestations are independently re-verifiable with `gh attestation verify`.
+# the run's OIDC id-token), and additionally runs SAST (Semgrep) and binds its
+# SARIF to the SAME tarball digest as a signed `sast/v1` predicate through the
+# attestation seam. All attestations are independently re-verifiable with
+# `gh attestation verify`.
+#
+# DAST is intentionally NOT attested here: this repo has no deployed target, so
+# there is no DAST evidence to bind. App repos attest their own DAST verdict.
 #
 # Runs automatically on release publish; re-attest an existing tag (e.g. v0.1.0)
-# via workflow_dispatch.
+# via workflow_dispatch. (Dispatch caveat: SAST scans the commit that triggered
+# the run; for the release-published flow that is the tag's commit.)
 
 "on":
   release:
@@ -24,13 +30,16 @@ permissions:
   contents: read
 
 jobs:
-  attest:
-    name: attest release
+  package:
+    name: package + attest provenance/SBOM
     runs-on: ubuntu-latest
     permissions:
       contents: write # upload assets to the release
       id-token: write # keyless Sigstore signing
       attestations: write # persist the attestations
+    outputs:
+      subject-name: ${{ steps.digest.outputs.subject-name }}
+      subject-digest: ${{ steps.digest.outputs.subject-digest }}
     steps:
       - name: Resolve tag
         id: tag
@@ -66,6 +75,16 @@ jobs:
           echo "sbom=${ART}.cyclonedx.json" >>"${GITHUB_OUTPUT}"
           sha256sum "${ART}"
 
+      - name: Compute subject digest (for the attestation seam)
+        id: digest
+        env:
+          ART: ${{ steps.pkg.outputs.artifact }}
+        run: |
+          set -euo pipefail
+          HEX="$(sha256sum "${ART}" | cut -d' ' -f1)"
+          echo "subject-name=${ART}" >>"${GITHUB_OUTPUT}"
+          echo "subject-digest=sha256:${HEX}" >>"${GITHUB_OUTPUT}"
+
       - name: Generate CycloneDX SBOM
         uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610 # v0.24.0
         with:
@@ -92,3 +111,28 @@ jobs:
           ART: ${{ steps.pkg.outputs.artifact }}
           SBOM: ${{ steps.pkg.outputs.sbom }}
         run: gh release upload "${TAG}" "${ART}" "${SBOM}" --clobber
+
+  sast:
+    name: sast (release evidence)
+    permissions:
+      contents: read
+      security-events: write
+      actions: read
+    uses: ./.github/workflows/reusable-semgrep.yml
+    with:
+      directory: .
+
+  attest-sast:
+    name: attest SAST verdict
+    needs: [package, sast]
+    permissions:
+      id-token: write # keyless Sigstore signing
+      attestations: write # persist the attestation
+      contents: read
+    uses: ./.github/workflows/reusable-attest-scan.yml
+    with:
+      subject-name: ${{ needs.package.outputs.subject-name }}
+      subject-digest: ${{ needs.package.outputs.subject-digest }}
+      predicate-type: https://modeled-information-format.github.io/attestations/sast/v1
+      predicate-artifact: ${{ needs.sast.outputs.sarif-artifact }}
+      predicate-filename: ${{ needs.sast.outputs.sarif-filename }}

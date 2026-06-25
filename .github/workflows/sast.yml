@@ -1,0 +1,46 @@
+# SAST gate for this repo (the central repo dogfooding its own reusables).
+#
+# Two engines, both emitting SARIF to the code-scanning hub:
+#   - CodeQL  — python + javascript-typescript (build-mode none; interpreted)
+#   - Semgrep — security-audit / secrets / command-injection packs (soft-fail;
+#     code scanning is the gate)
+#
+# Reusables are referenced by local `./` path (same repo) — exempt from
+# SHA-pinning and pin-check. To make findings a merge gate, add the resulting
+# "Code scanning results" check (or `sast / codeql` / `sast / semgrep`) as a
+# required status check on the default branch.
+name: sast
+
+"on":
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  schedule:
+    - cron: '37 4 * * 1'   # weekly, Monday 04:37 UTC (scattered minute)
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  codeql:
+    name: codeql
+    permissions:
+      security-events: write   # upload SARIF to code scanning
+      contents: read
+      actions: read
+      packages: read
+    uses: ./.github/workflows/reusable-sast-codeql.yml
+    with:
+      languages: 'python,javascript-typescript'
+
+  semgrep:
+    name: semgrep
+    permissions:
+      contents: read
+      security-events: write
+      actions: read
+    uses: ./.github/workflows/reusable-semgrep.yml
+    with:
+      directory: .
