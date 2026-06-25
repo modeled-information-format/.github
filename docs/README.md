@@ -1,12 +1,12 @@
-# attested-delivery documentation hub
+# modeled-information-format documentation hub
 
-This is the org-side entry point to the attested-delivery documentation. Following
+This is the org-side entry point to the modeled-information-format documentation. Following
 the **DRY principle**, every fact has exactly one home and this hub only *links*:
 
 - **Ecosystem-level docs** (attestation/SLSA concepts, the gate map, the promotion
   pipeline, the central reusable workflows, the catalog-updater) live in the
-  **deployed docs site** — Astro Starlight, built from `attested-delivery/docs-site`:
-  **<https://attested-delivery.github.io/docs/>**
+  **deployed docs site** — Astro Starlight, built from `modeled-information-format/docs-site`:
+  **<https://modeled-information-format.github.io/docs/>**
 - **Per-repo specifics** live in each project repo's own Diátaxis docs, indexed by
   that repo's `docs/README.md`.
 
@@ -14,20 +14,20 @@ the **DRY principle**, every fact has exactly one home and this hub only *links*
 
 | Quadrant | Start here |
 | --- | --- |
-| Ecosystem hub (map) | <https://attested-delivery.github.io/docs/ecosystem/> |
-| Tutorial | <https://attested-delivery.github.io/docs/tutorials/verify-your-first-attested-release/> |
-| How-to | <https://attested-delivery.github.io/docs/guides/onboard-a-repo/> |
-| Reference | <https://attested-delivery.github.io/docs/reference/quality-gate-workflows/> |
-| Explanation | <https://attested-delivery.github.io/docs/concepts/> |
+| Ecosystem hub (map) | <https://modeled-information-format.github.io/docs/ecosystem/> |
+| Tutorial | <https://modeled-information-format.github.io/docs/tutorials/verify-your-first-attested-release/> |
+| How-to | <https://modeled-information-format.github.io/docs/guides/onboard-a-repo/> |
+| Reference | <https://modeled-information-format.github.io/docs/reference/quality-gate-workflows/> |
+| Explanation | <https://modeled-information-format.github.io/docs/concepts/> |
 
 ## In-scope project repos (their own Diátaxis docs)
 
 | Repo | What it is | Its docs |
 | --- | --- | --- |
-| `rust-template` | Production Rust crate template (just recipes, SLSA L3, crates.io trusted publishing) | [docs/README.md](https://github.com/attested-delivery/rust-template/blob/main/docs/README.md) |
-| `attested-iac-template` | Copier template for attested OpenTofu/Terraform (Trivy + Checkov gates) | [docs/README.md](https://github.com/attested-delivery/attested-iac-template/blob/main/docs/README.md) |
-| `attested-pipeline-template` | Language-agnostic attested release pipeline template (Copier) | [docs/README.md](https://github.com/attested-delivery/attested-pipeline-template/blob/main/docs/README.md) |
-| `claude-code-plugins` | Attested Claude Code plugin marketplace (catalog-admission, fail-closed) | [docs/README.md](https://github.com/attested-delivery/claude-code-plugins/blob/main/docs/README.md) |
+| `rust-template` | Production Rust crate template (just recipes, SLSA L3, crates.io trusted publishing) | [docs/README.md](https://github.com/modeled-information-format/rust-template/blob/main/docs/README.md) |
+| `attested-iac-template` | Copier template for attested OpenTofu/Terraform (Trivy + Checkov gates) | [docs/README.md](https://github.com/modeled-information-format/attested-iac-template/blob/main/docs/README.md) |
+| `attested-pipeline-template` | Language-agnostic attested release pipeline template (Copier) | [docs/README.md](https://github.com/modeled-information-format/attested-pipeline-template/blob/main/docs/README.md) |
+| `claude-code-plugins` | Attested Claude Code plugin marketplace (catalog-admission, fail-closed) | [docs/README.md](https://github.com/modeled-information-format/claude-code-plugins/blob/main/docs/README.md) |
 
 ## Operating this org
 

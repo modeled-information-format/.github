@@ -22,7 +22,7 @@ you verified is the thing that runs.*
 
 ## How a marketplace opts in
 
-**Opt-in = install the `attested-delivery-ci` App on the repo** (with
+**Opt-in = install the `modeled-information-format-ci` App on the repo** (with
 `contents: write` + `pull-requests: write`). Discovery is App-install-scoped: the
 hub updates exactly the repos the App can access that contain a
 `.claude-plugin/marketplace.json`, minus anything in `deny-list.yaml`. There is no
@@ -59,19 +59,19 @@ target's `catalog-admission` so the hub and the gate agree.
 
 ## Owner setup
 
-The hub reads the `attested-delivery-ci` App's **client id** from an **org variable**
+The hub reads the `modeled-information-format-ci` App's **client id** from an **org variable**
 and its private key from an **org secret** (the client id is a public identifier, the
 key is not). `actions/create-github-app-token` takes `client-id` (the `app-id` input
 is deprecated). Scope both to the `.github` repo, where the hub runs:
 
 ```bash
 # App client id (public identifier, e.g. Iv23li...) — org variable
-gh variable set CATALOG_UPDATER_APP_CLIENT_ID --org attested-delivery \
+gh variable set CATALOG_UPDATER_APP_CLIENT_ID --org modeled-information-format \
   --visibility selected --repos .github --body "<CLIENT_ID>"
 
 # App private key — org secret (reads the .pem; value never printed)
-gh secret set CATALOG_UPDATER_APP_PRIVATE_KEY --org attested-delivery \
-  --visibility selected --repos .github < ~/.secrets/attested-delivery-ci.pem
+gh secret set CATALOG_UPDATER_APP_PRIVATE_KEY --org modeled-information-format \
+  --visibility selected --repos .github < ~/.secrets/modeled-information-format-ci.pem
 ```
 
 Also:
@@ -79,7 +79,7 @@ Also:
 - Allow-list `actions/create-github-app-token` (it is `actions/*`, intended-allowed
   — confirm, don't assume).
 - The App needs **contents** (write), **pull requests** (write), and **metadata**
-  (read, to enumerate `installation/repositories`) — `attested-delivery-ci`
+  (read, to enumerate `installation/repositories`) — `modeled-information-format-ci`
   already has these.
 - **Zero-touch ruleset bypass:** on each target repo, let the App actor bypass the
   required human review on `deps/external-plugin/*` PRs while keeping

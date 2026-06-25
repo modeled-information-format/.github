@@ -17,7 +17,7 @@
 #         contents: read
 #         security-events: write
 #         pull-requests: write
-#       uses: attested-delivery/.github/.github/workflows/reusable-sca-osv.yml@<sha>
+#       uses: modeled-information-format/.github/.github/workflows/reusable-sca-osv.yml@<sha>
 #       with:
 #         fail-on-severity: high
 

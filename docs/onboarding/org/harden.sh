@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Org-level security hardening for the attested-delivery org.
+# Org-level security hardening for the modeled-information-format org.
 #
 # REQUIRES: an active gh token with the `admin:org` scope. Grant it once with:
 #     gh auth refresh -h github.com -s admin:org
@@ -7,7 +7,7 @@
 #
 # Idempotent: every call is a declarative PUT/PATCH of desired state.
 set -euo pipefail
-ORG=attested-delivery
+ORG=modeled-information-format
 
 echo "== 1. Org member/repo policy (PATCH /orgs/$ORG) =="
 # Least-privilege defaults: members get read by default; no member-created public

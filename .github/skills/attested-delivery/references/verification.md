@@ -65,7 +65,7 @@ SEAM=<org>/.github/.github/workflows/reusable-attest-scan.yml
 # seam-signed gate (SAST shown; swap predicate-type for sca, iac-policy,
 # iac-misconfig, scorecard, dast)
 gh attestation verify "$SUBJECT" --owner <org> --signer-workflow "$SEAM" \
-  --predicate-type https://attested-delivery.github.io/attestations/sast/v1
+  --predicate-type https://modeled-information-format.github.io/attestations/sast/v1
 
 # OpenVEX disposition — self-signed by reusable-vex.yml
 gh attestation verify "$SUBJECT" --owner <org> \

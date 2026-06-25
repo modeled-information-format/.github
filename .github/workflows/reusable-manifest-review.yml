@@ -18,7 +18,7 @@
 #         contents: read
 #         security-events: write
 #         actions: read
-#       uses: attested-delivery/.github/.github/workflows/reusable-manifest-review.yml@<sha>
+#       uses: modeled-information-format/.github/.github/workflows/reusable-manifest-review.yml@<sha>
 #       with:
 #         directory: .
 
@@ -128,7 +128,7 @@ jobs:
           sarif = {"version": "2.1.0",
                    "$schema": "https://json.schemastore.org/sarif-2.1.0.json",
                    "runs": [{"tool": {"driver": {"name": "manifest-review",
-                             "informationUri": "https://github.com/attested-delivery/.github",
+                             "informationUri": "https://github.com/modeled-information-format/.github",
                              "rules": [{"id": r} for r in sorted({x["ruleId"] for x in results})]}},
                              "results": results}]}
           print(json.dumps(sarif))

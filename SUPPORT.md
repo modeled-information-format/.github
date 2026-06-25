@@ -2,22 +2,22 @@
 
 ## Getting Help
 
-If you need help with `attested-delivery/.github`, here are some resources:
+If you need help with `modeled-information-format/.github`, here are some resources:
 
 ### Documentation
 
-- Check the repository [README](https://github.com/attested-delivery/.github#readme) for setup and usage instructions
-- Browse the [wiki](https://github.com/attested-delivery/.github/wiki) for detailed guides
+- Check the repository [README](https://github.com/modeled-information-format/.github#readme) for setup and usage instructions
+- Browse the [wiki](https://github.com/modeled-information-format/.github/wiki) for detailed guides
 
 ### Community
 
-- **Discussions**: Ask questions and share ideas in [GitHub Discussions](https://github.com/attested-delivery/.github/discussions)
-- **Issues**: Search [existing issues](https://github.com/attested-delivery/.github/issues) for known problems and solutions
+- **Discussions**: Ask questions and share ideas in [GitHub Discussions](https://github.com/modeled-information-format/.github/discussions)
+- **Issues**: Search [existing issues](https://github.com/modeled-information-format/.github/issues) for known problems and solutions
 
 ### Reporting Issues
 
-- **Bugs**: [Open a bug report](https://github.com/attested-delivery/.github/issues/new?template=bug_report.yml)
-- **Feature requests**: [Open a feature request](https://github.com/attested-delivery/.github/issues/new?template=feature_request.yml)
+- **Bugs**: [Open a bug report](https://github.com/modeled-information-format/.github/issues/new?template=bug_report.yml)
+- **Feature requests**: [Open a feature request](https://github.com/modeled-information-format/.github/issues/new?template=feature_request.yml)
 - **Security vulnerabilities**: See [SECURITY.md](SECURITY.md) for responsible disclosure instructions
 
 ## What to Include

@@ -17,10 +17,10 @@ when a default changes in the workflow, update the entry here.
 40-char commit SHA, with the version as a trailing comment:
 
 ```yaml
-uses: attested-delivery/.github/.github/workflows/<name>.yml@<sha> # vX.Y.Z
+uses: modeled-information-format/.github/.github/workflows/<name>.yml@<sha> # vX.Y.Z
 ```
 
-Resolve the SHA at use time (`gh api repos/attested-delivery/.github/git/ref/tags/<tag>`);
+Resolve the SHA at use time (`gh api repos/modeled-information-format/.github/git/ref/tags/<tag>`);
 never trust a remembered value. `pin-check` enforces this on every caller.
 
 ---
@@ -60,7 +60,7 @@ identity for every SARIF gate; verifiers pin `--signer-workflow` to this file.
 
 - **Inputs (all required):** `subject-name` (logical subject — image repo, package,
   or artifact label); `subject-digest` (`sha256:...` the predicate binds to);
-  `predicate-type` (URI, e.g. `https://attested-delivery.github.io/attestations/sast/v1`);
+  `predicate-type` (URI, e.g. `https://modeled-information-format.github.io/attestations/sast/v1`);
   `predicate-artifact` (uploaded artifact name holding the evidence);
   `predicate-filename` (evidence filename within the artifact, e.g. `results.sarif`).
 - **Secrets:** none. **Outputs:** none.
@@ -93,7 +93,7 @@ cosign signature, CycloneDX SBOM, and a Grype vulnerability report, then
 self-verifies. Image-only; not for static artifacts.
 
 - **Inputs:** `image-name` (required — repo without tag/digest, e.g.
-  `ghcr.io/attested-delivery/app`); `image-digest` (required — `sha256:...`);
+  `ghcr.io/modeled-information-format/app`); `image-digest` (required — `sha256:...`);
   `sbom` (boolean, default `true`); `vuln-scan` (boolean, default `true`);
   `cosign-version` (string, default `v3.0.6`).
 - **Secrets:** none. **Outputs:** `provenance-verified` (`true` when the in-run
@@ -114,10 +114,10 @@ to `sign-and-attest.yml`. Reused by promotion and callable before deploy. Image-
 - **Inputs:** `image-ref` (required — `registry/repo@sha256:...`);
   `attestation-repo` (required — `owner/repo` that produced the attestation);
   `certificate-identity-regexp` (default
-  `^https://github.com/attested-delivery/\.github/\.github/workflows/sign-and-attest\.yml@.*$`);
+  `^https://github.com/modeled-information-format/\.github/\.github/workflows/sign-and-attest\.yml@.*$`);
   `certificate-oidc-issuer` (default `https://token.actions.githubusercontent.com`);
   `signer-workflow` (default
-  `attested-delivery/.github/.github/workflows/sign-and-attest.yml`);
+  `modeled-information-format/.github/.github/workflows/sign-and-attest.yml`);
   `require-sbom` (boolean, default `true`); `aws-role-arn` (default `""` — if set,
   assume the role and log into ECR before verifying); `aws-region` (default
   `us-east-1`).
@@ -136,7 +136,7 @@ to `sign-and-attest.yml`. Reused by promotion and callable before deploy. Image-
 Each SARIF gate uploads an evidence artifact and exposes `sarif-artifact` /
 `sarif-filename` outputs; the caller wires those into `reusable-attest-scan.yml`
 with the gate's predicate type. Predicate namespace:
-`https://attested-delivery.github.io/attestations/<gate>/v1`.
+`https://modeled-information-format.github.io/attestations/<gate>/v1`.
 
 ### `${CLAUDE_PLUGIN_ROOT}/workflows/reusable-sast-codeql.yml` — SAST
 CodeQL code scanning → SARIF 2.1.0 into the code-scanning hub.

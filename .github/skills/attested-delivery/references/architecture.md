@@ -21,7 +21,7 @@ production — only when all three hold:
 
 Signing runs in a centralized **reusable workflow** the calling repo cannot modify.
 The Fulcio certificate's SAN (`job_workflow_ref`) is therefore the central workflow
-— `attested-delivery/.github/.github/workflows/sign-and-attest.yml@<sha>` (or
+— `modeled-information-format/.github/.github/workflows/sign-and-attest.yml@<sha>` (or
 `reusable-attest-scan.yml` for gate verdicts) — while the certificate extensions
 record the *caller* as the source repository and ref. Verifiers assert both
 independently (source repo via `--repo` / extension 1.3.6.1.4.1.57264.1.12; signer
@@ -91,7 +91,7 @@ attestation. The pattern: a gate uploads its evidence artifact (exposing
 `sarif-artifact` / `sarif-filename` outputs), then the caller invokes
 `reusable-attest-scan.yml` with `subject-name` + `subject-digest` and the gate's
 `predicate-type` (namespace
-`https://attested-delivery.github.io/attestations/<gate>/v1`). The result is a
+`https://modeled-information-format.github.io/attestations/<gate>/v1`). The result is a
 signed, digest-bound in-toto statement. `reusable-verify-gates.yml` re-verifies a
 set of predicate types for one signer at deploy time, fail-closed.
 

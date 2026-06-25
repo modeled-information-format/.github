@@ -3,7 +3,7 @@ name: plugin-catalog-update-hub
 
 # Central, verify-first catalog-updater hub.
 #
-# For every marketplace repo the attested-delivery-ci App can access that holds a
+# For every marketplace repo the modeled-information-format-ci App can access that holds a
 # .claude-plugin/marketplace.json (minus catalog-update/deny-list.yaml), re-pin
 # each EXTERNAL plugin entry to its latest ATTESTED release and open a zero-touch
 # auto-merge PR whose body carries the full attestation evidence. Discovery is

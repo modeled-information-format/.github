@@ -247,8 +247,8 @@ class SourceRepo(unittest.TestCase):
 
     def test_url_field(self):
         self.assertEqual(cu.source_repo(
-            {"url": "https://github.com/attested-delivery/.github.git"}),
-            "attested-delivery/.github")
+            {"url": "https://github.com/modeled-information-format/.github.git"}),
+            "modeled-information-format/.github")
 
     def test_url_no_suffix(self):
         self.assertEqual(cu.source_repo({"url": "https://github.com/o/r"}), "o/r")

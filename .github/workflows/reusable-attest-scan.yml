@@ -10,7 +10,7 @@
 # Verification (see SECURITY.md):
 #   gh attestation verify <subject> --owner <owner> \
 #     --predicate-type <predicate-type> \
-#     --signer-workflow attested-delivery/.github/.github/workflows/reusable-attest-scan.yml
+#     --signer-workflow modeled-information-format/.github/.github/workflows/reusable-attest-scan.yml
 #
 # Security note: only workflow_call inputs (controlled by the caller) and the
 # downloaded evidence artifact are used. No untrusted input reaches a shell.
@@ -23,11 +23,11 @@
 #         id-token: write
 #         attestations: write
 #         contents: read
-#       uses: attested-delivery/.github/.github/workflows/reusable-attest-scan.yml@<sha>
+#       uses: modeled-information-format/.github/.github/workflows/reusable-attest-scan.yml@<sha>
 #       with:
 #         subject-name: my-app
 #         subject-digest: ${{ needs.build.outputs.digest }}   # sha256:...
-#         predicate-type: https://attested-delivery.github.io/attestations/sast/v1
+#         predicate-type: https://modeled-information-format.github.io/attestations/sast/v1
 #         predicate-artifact: ${{ needs.sast.outputs.sarif-artifact }}
 #         predicate-filename: ${{ needs.sast.outputs.sarif-filename }}
 

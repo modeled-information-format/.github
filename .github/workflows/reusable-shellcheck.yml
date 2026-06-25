@@ -16,7 +16,7 @@
 #       permissions:
 #         contents: read
 #         security-events: write
-#       uses: attested-delivery/.github/.github/workflows/reusable-shellcheck.yml@<sha>
+#       uses: modeled-information-format/.github/.github/workflows/reusable-shellcheck.yml@<sha>
 
 name: shellcheck
 

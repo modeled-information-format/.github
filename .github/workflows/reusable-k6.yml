@@ -15,7 +15,7 @@
 #         id-token: write
 #         attestations: write
 #         contents: read
-#       uses: attested-delivery/.github/.github/workflows/reusable-k6.yml@<sha>
+#       uses: modeled-information-format/.github/.github/workflows/reusable-k6.yml@<sha>
 #       with:
 #         script-path: tests/load.js
 #         attest: true
@@ -90,5 +90,5 @@ jobs:
         with:
           subject-name: ${{ inputs.subject-name }}
           subject-digest: ${{ inputs.subject-digest }}
-          predicate-type: https://attested-delivery.github.io/attestations/k6-load/v1
+          predicate-type: https://modeled-information-format.github.io/attestations/k6-load/v1
           predicate-path: k6-summary.json

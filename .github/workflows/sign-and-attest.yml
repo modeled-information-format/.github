@@ -14,7 +14,7 @@
 #   - Grype:                                   https://github.com/anchore/grype
 #
 # Caller MUST pin this workflow by full commit SHA, e.g.:
-#   uses: attested-delivery/.github/.github/workflows/sign-and-attest.yml@<SHA>
+#   uses: modeled-information-format/.github/.github/workflows/sign-and-attest.yml@<SHA>
 
 name: sign-and-attest
 
@@ -22,7 +22,7 @@ on:
   workflow_call:
     inputs:
       image-name:
-        description: "Image repository without tag/digest (e.g. ghcr.io/attested-delivery/app)"
+        description: "Image repository without tag/digest (e.g. ghcr.io/modeled-information-format/app)"
         required: true
         type: string
       image-digest:
@@ -136,6 +136,6 @@ jobs:
           # SAN under SLSA L3 is THIS central workflow, asserted separately.
           gh attestation verify "oci://${IMAGE_REF}" \
             --repo "${{ github.repository }}" \
-            --signer-workflow "attested-delivery/.github/.github/workflows/sign-and-attest.yml" \
+            --signer-workflow "modeled-information-format/.github/.github/workflows/sign-and-attest.yml" \
             --predicate-type "https://slsa.dev/provenance/v1"
           echo "verified=true" >> "$GITHUB_OUTPUT"

@@ -19,7 +19,7 @@ SLSA-attested, fail-closed-verified releases — by wiring a repository or
 organization as a **thin caller of this org's central reusable workflows**. The
 reusables are bundled with this plugin under `${CLAUDE_PLUGIN_ROOT}/workflows/`
 and enumerated in `references/workflow-catalog.md`; they are the same files the
-org serves at `attested-delivery/.github/.github/workflows/`. Build the wiring;
+org serves at `modeled-information-format/.github/.github/workflows/`. Build the wiring;
 never reinvent the machinery inline.
 
 > This skill supersedes the earlier `__ORG__`-token template flow. The current
@@ -69,7 +69,7 @@ Run Phase 0 first. It determines the mode:
 
 - **Mode A — consumer repo, architecture exists.** The org already serves the
   central workflows. Wire the repo as a caller, pinned by the full 40-char commit
-  SHA of `attested-delivery/.github`. Skip Phase 1 except gap checks.
+  SHA of `modeled-information-format/.github`. Skip Phase 1 except gap checks.
 - **Mode B — constitute a new org.** An org without the architecture gets the
   central workflows on its own `.github` repo (publish this plugin's
   `${CLAUDE_PLUGIN_ROOT}/workflows/` set there, pinned), then proceeds as Mode A

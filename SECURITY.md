@@ -8,10 +8,10 @@ floating tag or branch ref. Dependabot's `github-actions` ecosystem keeps the pi
 current via automated PRs.
 
 ```yaml
-uses: attested-delivery/.github/.github/workflows/<workflow>.yml@<full-sha> # vX.Y.Z
+uses: modeled-information-format/.github/.github/workflows/<workflow>.yml@<full-sha> # vX.Y.Z
 ```
 
-Check the [latest release](https://github.com/attested-delivery/.github/releases)
+Check the [latest release](https://github.com/modeled-information-format/.github/releases)
 for the current recommended SHA and changelog.
 
 | Version | Supported |
@@ -25,7 +25,7 @@ If you discover a security vulnerability in this project, please report it respo
 
 **Please do NOT open a public GitHub issue for security vulnerabilities.**
 
-Use [GitHub private vulnerability reporting](https://github.com/attested-delivery/.github/security/advisories/new)
+Use [GitHub private vulnerability reporting](https://github.com/modeled-information-format/.github/security/advisories/new)
 to disclose directly to maintainers. Include:
 
 1. A description of the vulnerability
@@ -51,36 +51,36 @@ We follow coordinated disclosure. We ask that you:
 
 Repositories onboarded to the attested release architecture sign container images
 through the centralized signer workflow in this repository
-(`attested-delivery/.github/.github/workflows/sign-and-attest.yml`). Each release
+(`modeled-information-format/.github/.github/workflows/sign-and-attest.yml`). Each release
 digest carries SLSA provenance, a keyless signature, a CycloneDX SBOM, and a
 vulnerability report as OCI referrers. Verify from any workstation with `gh`
 (authenticated) and `cosign`:
 
 ```sh
 # 0. Resolve the digest for a tag
-DIGEST=$(gh api 'orgs/attested-delivery/packages/container/<name>/versions?per_page=100' \
+DIGEST=$(gh api 'orgs/modeled-information-format/packages/container/<name>/versions?per_page=100' \
   --jq '[.[] | select((.metadata.container.tags // []) | index("<tag>"))][0].name')
 
 # 1. SLSA provenance
-gh attestation verify "oci://ghcr.io/attested-delivery/<repo>@${DIGEST}" \
-  --repo attested-delivery/<repo> \
-  --signer-workflow attested-delivery/.github/.github/workflows/sign-and-attest.yml \
+gh attestation verify "oci://ghcr.io/modeled-information-format/<repo>@${DIGEST}" \
+  --repo modeled-information-format/<repo> \
+  --signer-workflow modeled-information-format/.github/.github/workflows/sign-and-attest.yml \
   --predicate-type https://slsa.dev/provenance/v1
 
 # 2. Keyless signature
-cosign verify "ghcr.io/attested-delivery/<repo>@${DIGEST}" \
-  --certificate-identity-regexp '^https://github.com/attested-delivery/\.github/\.github/workflows/sign-and-attest\.yml@.*$' \
+cosign verify "ghcr.io/modeled-information-format/<repo>@${DIGEST}" \
+  --certificate-identity-regexp '^https://github.com/modeled-information-format/\.github/\.github/workflows/sign-and-attest\.yml@.*$' \
   --certificate-oidc-issuer https://token.actions.githubusercontent.com
 
 # 3. SBOM attestation
-cosign verify-attestation "ghcr.io/attested-delivery/<repo>@${DIGEST}" \
+cosign verify-attestation "ghcr.io/modeled-information-format/<repo>@${DIGEST}" \
   --type cyclonedx \
-  --certificate-identity-regexp '^https://github.com/attested-delivery/\.github/\.github/workflows/sign-and-attest\.yml@.*$' \
+  --certificate-identity-regexp '^https://github.com/modeled-information-format/\.github/\.github/workflows/sign-and-attest\.yml@.*$' \
   --certificate-oidc-issuer https://token.actions.githubusercontent.com
 
 # 4. Release binaries
-gh release download <tag> --repo attested-delivery/<repo>
-gh attestation verify <binary> --repo attested-delivery/<repo>
+gh release download <tag> --repo modeled-information-format/<repo>
+gh attestation verify <binary> --repo modeled-information-format/<repo>
 ```
 
 ## Verifying Quality-Gate Attestations
@@ -90,19 +90,19 @@ digest-bound attestation for each CI gate — SAST, SCA, container/IaC/license s
 DAST, supply-chain posture, and vulnerability disposition.
 
 ```sh
-SUBJECT=oci://ghcr.io/attested-delivery/<repo>@${DIGEST}
-SEAM=attested-delivery/.github/.github/workflows/reusable-attest-scan.yml
+SUBJECT=oci://ghcr.io/modeled-information-format/<repo>@${DIGEST}
+SEAM=modeled-information-format/.github/.github/workflows/reusable-attest-scan.yml
 
 # Seam-signed gate (SAST shown; swap predicate-type for other SARIF gates)
-gh attestation verify "$SUBJECT" --owner attested-delivery --signer-workflow "$SEAM" \
-  --predicate-type https://attested-delivery.github.io/attestations/sast/v1
+gh attestation verify "$SUBJECT" --owner modeled-information-format --signer-workflow "$SEAM" \
+  --predicate-type https://modeled-information-format.github.io/attestations/sast/v1
 
 # DAST (ZAP) verdict — seam-signed, same signer workflow
-gh attestation verify "$SUBJECT" --owner attested-delivery --signer-workflow "$SEAM" \
-  --predicate-type https://attested-delivery.github.io/attestations/dast/v1
+gh attestation verify "$SUBJECT" --owner modeled-information-format --signer-workflow "$SEAM" \
+  --predicate-type https://modeled-information-format.github.io/attestations/dast/v1
 
 # Vulnerability disposition (OpenVEX — self-signed by reusable-vex.yml)
-gh attestation verify "$SUBJECT" --owner attested-delivery \
-  --signer-workflow attested-delivery/.github/.github/workflows/reusable-vex.yml \
+gh attestation verify "$SUBJECT" --owner modeled-information-format \
+  --signer-workflow modeled-information-format/.github/.github/workflows/reusable-vex.yml \
   --predicate-type https://openvex.dev/ns/v0.2.0
 ```

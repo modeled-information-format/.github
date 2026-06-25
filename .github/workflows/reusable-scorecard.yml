@@ -17,7 +17,7 @@
 #         id-token: write
 #         contents: read
 #         actions: read
-#       uses: attested-delivery/.github/.github/workflows/reusable-scorecard.yml@<sha>
+#       uses: modeled-information-format/.github/.github/workflows/reusable-scorecard.yml@<sha>
 
 name: scorecard
 

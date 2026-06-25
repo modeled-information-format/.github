@@ -43,7 +43,7 @@ representing the community in public spaces.
 ## Enforcement
 
 Instances of unacceptable behavior may be reported via
-[GitHub private vulnerability reporting](https://github.com/attested-delivery/.github/security/advisories/new)
+[GitHub private vulnerability reporting](https://github.com/modeled-information-format/.github/security/advisories/new)
 or by opening a private discussion with the maintainers.
 All complaints will be reviewed and investigated promptly and fairly.
 

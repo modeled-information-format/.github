@@ -1,21 +1,21 @@
-# Contributing to attested-delivery/.github
+# Contributing to modeled-information-format/.github
 
 Thank you for your interest in contributing. This repository holds the org-wide
 shared workflows, community health files, and attestation patterns for the
-`attested-delivery` organization.
+`modeled-information-format` organization.
 
 ## How to Contribute
 
 ### Reporting Bugs
 
-1. **Search existing issues** at [github.com/attested-delivery/.github/issues](https://github.com/attested-delivery/.github/issues) to avoid duplicates.
-2. If no existing issue matches, [open a new bug report](https://github.com/attested-delivery/.github/issues/new?template=bug_report.yml).
+1. **Search existing issues** at [github.com/modeled-information-format/.github/issues](https://github.com/modeled-information-format/.github/issues) to avoid duplicates.
+2. If no existing issue matches, [open a new bug report](https://github.com/modeled-information-format/.github/issues/new?template=bug_report.yml).
 3. Include as much detail as possible: steps to reproduce, expected vs actual behavior, environment details, and logs or screenshots.
 
 ### Suggesting Features
 
 1. **Check discussions and issues** to see if the feature has already been proposed.
-2. [Open a feature request](https://github.com/attested-delivery/.github/issues/new?template=feature_request.yml) with a clear description of the problem and your proposed solution.
+2. [Open a feature request](https://github.com/modeled-information-format/.github/issues/new?template=feature_request.yml) with a clear description of the problem and your proposed solution.
 
 ### Submitting Pull Requests
 
@@ -73,5 +73,5 @@ This project follows the [Contributor Covenant Code of Conduct](CODE_OF_CONDUCT.
 
 ## Questions?
 
-- Open a [discussion](https://github.com/attested-delivery/.github/discussions) for general questions.
+- Open a [discussion](https://github.com/modeled-information-format/.github/discussions) for general questions.
 - Check the [support document](SUPPORT.md) for additional resources.

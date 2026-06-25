@@ -19,7 +19,7 @@
 #     actionlint:
 #       permissions:
 #         contents: read
-#       uses: attested-delivery/.github/.github/workflows/reusable-actionlint.yml@<sha>
+#       uses: modeled-information-format/.github/.github/workflows/reusable-actionlint.yml@<sha>
 
 name: actionlint
 

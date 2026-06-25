@@ -18,7 +18,7 @@
 #         security-events: write
 #         contents: read
 #         actions: read
-#       uses: attested-delivery/.github/.github/workflows/reusable-sast-codeql.yml@<sha>
+#       uses: modeled-information-format/.github/.github/workflows/reusable-sast-codeql.yml@<sha>
 #       with:
 #         languages: 'javascript-typescript,python'
 

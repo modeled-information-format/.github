@@ -60,8 +60,8 @@ jobs:
           VERSION: ${{ steps.tag.outputs.version }}
         run: |
           set -euo pipefail
-          ART="attested-delivery-${VERSION}.tar.gz"
-          git archive --format=tar.gz --prefix="attested-delivery-${VERSION}/" -o "${ART}" "${TAG}"
+          ART="modeled-information-format-${VERSION}.tar.gz"
+          git archive --format=tar.gz --prefix="modeled-information-format-${VERSION}/" -o "${ART}" "${TAG}"
           echo "artifact=${ART}" >>"${GITHUB_OUTPUT}"
           echo "sbom=${ART}.cyclonedx.json" >>"${GITHUB_OUTPUT}"
           sha256sum "${ART}"

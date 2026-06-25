@@ -1,7 +1,7 @@
 {
-  "name": "attested-delivery-ci",
-  "url": "https://github.com/attested-delivery",
-  "description": "Org automation identity for attested-delivery: repo provisioning, agentic workflows, and cross-repo dispatch. NOT used for GHCR data-plane or artifact signing — in-workflow signing uses the run's own ephemeral GITHUB_TOKEN + OIDC id-token (SLSA L3 requires the central signer identity, not an App token).",
+  "name": "modeled-information-format-ci",
+  "url": "https://github.com/modeled-information-format",
+  "description": "Org automation identity for modeled-information-format: repo provisioning, agentic workflows, and cross-repo dispatch. NOT used for GHCR data-plane or artifact signing — in-workflow signing uses the run's own ephemeral GITHUB_TOKEN + OIDC id-token (SLSA L3 requires the central signer identity, not an App token).",
   "public": false,
   "default_events": [
     "pull_request",

@@ -21,7 +21,7 @@
 #         contents: read
 #         security-events: write
 #         actions: read
-#       uses: attested-delivery/.github/.github/workflows/reusable-semgrep.yml@<sha>
+#       uses: modeled-information-format/.github/.github/workflows/reusable-semgrep.yml@<sha>
 #       with:
 #         directory: .
 

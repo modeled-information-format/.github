@@ -1,7 +1,7 @@
-# `.github` — attested-delivery org configuration
+# `.github` — modeled-information-format org configuration
 
 Org-wide community-health defaults, reusable attested quality-gate workflows,
-and the centralized signing/verification workflows for the **attested-delivery**
+and the centralized signing/verification workflows for the **modeled-information-format**
 organization.
 
 ## GitHub Actions policy
@@ -18,7 +18,7 @@ Actions posture:
   hide tag-pinned nested actions, e.g. `actions/upload-pages-artifact` →
   `actions/upload-artifact@v4`; package such steps inline with SHA-pinned actions.)
 
-Same-org (`attested-delivery/*`) and GitHub-created (`actions/*`, `github/*`)
+Same-org (`modeled-information-format/*`) and GitHub-created (`actions/*`, `github/*`)
 actions are always allowed. Everything else is a third-party publisher that must
 be added to the **"Allow specified actions and reusable workflows"** box.
 
@@ -28,13 +28,13 @@ be added to the **"Allow specified actions and reusable workflows"** box.
 separately.
 
 ```
-anchore/sbom-action@*,attested-delivery/*,codecov/codecov-action@*,crate-ci/typos@*,dependabot/fetch-metadata@*,docker/*,dtolnay/rust-toolchain@*,gitleaks/gitleaks-action@*,google/osv-scanner-action@*,peter-evans/dockerhub-description@*,rust-lang/crates-io-auth-action@*,softprops/action-gh-release@*,taiki-e/install-action@*
+anchore/sbom-action@*,modeled-information-format/*,codecov/codecov-action@*,crate-ci/typos@*,dependabot/fetch-metadata@*,docker/*,dtolnay/rust-toolchain@*,gitleaks/gitleaks-action@*,google/osv-scanner-action@*,peter-evans/dockerhub-description@*,rust-lang/crates-io-auth-action@*,softprops/action-gh-release@*,taiki-e/install-action@*
 ```
 
 | Pattern | Used by |
 | --- | --- |
 | `anchore/sbom-action@*` | SBOM generation (Syft) |
-| `attested-delivery/*` | org-owned actions/reusables (always allowed; explicit here) |
+| `modeled-information-format/*` | org-owned actions/reusables (always allowed; explicit here) |
 | `codecov/codecov-action@*` | coverage upload |
 | `crate-ci/typos@*` | spell check |
 | `dependabot/fetch-metadata@*` | dependabot automation |

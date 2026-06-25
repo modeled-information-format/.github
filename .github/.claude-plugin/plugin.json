@@ -3,10 +3,10 @@
   "version": "0.1.0",
   "description": "Signed, SLSA-attested, fail-closed-verified releases — central reusable signing/seam/verify workflows and independent gh attestation verify.",
   "author": {
-    "name": "attested-delivery"
+    "name": "modeled-information-format"
   },
-  "homepage": "https://attested-delivery.github.io/docs/",
-  "repository": "https://github.com/attested-delivery/.github",
+  "homepage": "https://modeled-information-format.github.io/docs/",
+  "repository": "https://github.com/modeled-information-format/.github",
   "keywords": [
     "slsa",
     "attestation",

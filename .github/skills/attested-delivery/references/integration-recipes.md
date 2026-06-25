@@ -21,7 +21,7 @@ Channel-encoding actions: any action whose ref selects behavior (e.g.
 (`with: toolchain: stable`) once pinned to a SHA.
 
 Throughout, `<org>/.github` is the central repo serving the reusables (for a repo
-in this org, `<org>` = `attested-delivery`; in Mode B it is the new org's own copy —
+in this org, `<org>` = `modeled-information-format`; in Mode B it is the new org's own copy —
 never cross-org), and `<org>/<repo>` is the consumer being onboarded. Pin every
 `uses:` to the central repo's full 40-char SHA with a trailing `# vX.Y.Z`.
 
@@ -30,7 +30,7 @@ authoritative input list.** The exact `workflow_call` contract for each reusable
 (input names, defaults, outputs, required permissions) lives in one place:
 `references/workflow-catalog.md`. Read it for the inputs; treat the `with:` blocks
 below as illustrative. For a **complete, CI-validated runnable caller** to copy from,
-see the Copier template `attested-delivery/attested-iac-template` — a real repo whose
+see the Copier template `modeled-information-format/attested-iac-template` — a real repo whose
 pins `actionlint`/`pin-check`/Dependabot keep current, so it never drifts the way a
 pasted snippet does.
 
@@ -63,7 +63,7 @@ jobs:
     with:
       subject-name: ghcr.io/<org>/<repo>
       subject-digest: ${{ needs.build.outputs.image-digest }}
-      predicate-type: https://attested-delivery.github.io/attestations/sast/v1
+      predicate-type: https://modeled-information-format.github.io/attestations/sast/v1
       predicate-artifact: ${{ needs.sast.outputs.sarif-artifact }}
       predicate-filename: ${{ needs.sast.outputs.sarif-filename }}
 ```
@@ -75,7 +75,7 @@ perms `contents: read` + `attestations: read` + `packages: read`) that calls
 for seam-signed gates; `reusable-vex.yml` for OpenVEX — one signer per call), and the
 `predicate-types` to require. Inputs and the one-signer-per-call rule are specified in
 `references/workflow-catalog.md` → `reusable-verify-gates.yml`; a worked caller is in
-`attested-delivery/attested-iac-template`.
+`modeled-information-format/attested-iac-template`.
 
 A repo with **no container build yet** builds and pushes its image by digest in its
 own build job, then signs via recipe B. There is no single "build-and-attest"

@@ -20,9 +20,9 @@
 #         contents: read
 #         security-events: write
 #         actions: read
-#       uses: attested-delivery/.github/.github/workflows/reusable-trivy.yml@<sha>
+#       uses: modeled-information-format/.github/.github/workflows/reusable-trivy.yml@<sha>
 #       with:
-#         image-ref: ghcr.io/attested-delivery/app@sha256:...   # omit to scan repo only
+#         image-ref: ghcr.io/modeled-information-format/app@sha256:...   # omit to scan repo only
 
 name: trivy
 

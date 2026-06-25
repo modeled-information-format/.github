@@ -27,7 +27,7 @@ on:
         description: "Expected Fulcio cert identity (the centralized signer workflow)"
         required: false
         type: string
-        default: "^https://github.com/attested-delivery/\\.github/\\.github/workflows/sign-and-attest\\.yml@.*$"
+        default: "^https://github.com/modeled-information-format/\\.github/\\.github/workflows/sign-and-attest\\.yml@.*$"
       certificate-oidc-issuer:
         required: false
         type: string
@@ -36,7 +36,7 @@ on:
         description: "Signer workflow for gh attestation verify (owner/repo/path form)"
         required: false
         type: string
-        default: "attested-delivery/.github/.github/workflows/sign-and-attest.yml"
+        default: "modeled-information-format/.github/.github/workflows/sign-and-attest.yml"
       require-sbom:
         required: false
         type: boolean

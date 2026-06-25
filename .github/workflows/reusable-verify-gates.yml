@@ -21,25 +21,25 @@
 #         contents: read
 #         attestations: read
 #         packages: read
-#       uses: attested-delivery/.github/.github/workflows/reusable-verify-gates.yml@<sha>
+#       uses: modeled-information-format/.github/.github/workflows/reusable-verify-gates.yml@<sha>
 #       with:
-#         subject-ref: oci://ghcr.io/attested-delivery/app@sha256:...
-#         owner: attested-delivery
-#         signer-workflow: attested-delivery/.github/.github/workflows/reusable-attest-scan.yml
+#         subject-ref: oci://ghcr.io/modeled-information-format/app@sha256:...
+#         owner: modeled-information-format
+#         signer-workflow: modeled-information-format/.github/.github/workflows/reusable-attest-scan.yml
 #         predicate-types: |-
-#           https://attested-delivery.github.io/attestations/sast/v1
-#           https://attested-delivery.github.io/attestations/sca/v1
-#           https://attested-delivery.github.io/attestations/dast/v1
+#           https://modeled-information-format.github.io/attestations/sast/v1
+#           https://modeled-information-format.github.io/attestations/sca/v1
+#           https://modeled-information-format.github.io/attestations/dast/v1
 #     verify-vex:                          # OpenVEX is signed by reusable-vex.yml
 #       permissions:
 #         contents: read
 #         attestations: read
 #         packages: read
-#       uses: attested-delivery/.github/.github/workflows/reusable-verify-gates.yml@<sha>
+#       uses: modeled-information-format/.github/.github/workflows/reusable-verify-gates.yml@<sha>
 #       with:
-#         subject-ref: oci://ghcr.io/attested-delivery/app@sha256:...
-#         owner: attested-delivery
-#         signer-workflow: attested-delivery/.github/.github/workflows/reusable-vex.yml
+#         subject-ref: oci://ghcr.io/modeled-information-format/app@sha256:...
+#         owner: modeled-information-format
+#         signer-workflow: modeled-information-format/.github/.github/workflows/reusable-vex.yml
 #         predicate-types: https://openvex.dev/ns/v0.2.0
 #     deploy:
 #       needs: [verify-seam, verify-vex]

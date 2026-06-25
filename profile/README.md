@@ -1,69 +1,76 @@
-# attested-delivery
+# Modeled Information Format (MIF)
 
-**Document, validate, share, and promulgate attested-workflow practices in GitHub.**
+**The opinionated, OKF-compliant content model that fills OKF's deliberately empty envelope.**
 
 ---
 
 ## Mission
 
-`attested-delivery` is an open organization dedicated to making signed, SLSA-attested, fail-closed-verified release pipelines the standard — not the exception.
+[OKF](https://github.com/google/open-knowledge-format) defines the *transport
+surface* — a directory of markdown files with YAML frontmatter and one required
+`type` field — and deliberately leaves the **content model** open. `MIF` supplies
+the concrete type system, typed relationships, provenance/trust, and
+validity/freshness semantics that OKF leaves unspecified.
 
-The work here is practical: reusable GitHub Actions workflows, reference documentation, and the canonical predicate schemas for signing and verifying quality-gate evidence. Every pattern is designed to be adopted by any repo with a few lines of YAML.
+Every MIF bundle validates as a conformant OKF bundle — compliance as a
+**superset, not by subordination**. MIF remains an independent specification with
+its own identity model and governance.
 
----
+**AI memory is the first domain profile of MIF, not its identity.** The same
+content model carries any structured, evolving knowledge corpus.
 
-## What's Here
-
-### Reusable Workflows (`.github/.github/workflows/`)
-
-A cohesive set of `workflow_call` reusable workflows that together implement the attested release architecture:
-
-| Workflow | Purpose |
-|----------|---------|
-| `pin-check` | Assert every `uses:` in a caller's workflows is pinned to a full 40-char commit SHA |
-| `reusable-attest-scan` | The attestation seam — turn any scanner's evidence file into a signed, digest-bound in-toto attestation |
-| `reusable-verify-gates` | Fail-closed gate verification before any publish or deploy |
-| `reusable-sast-codeql` | SAST via GitHub CodeQL (SARIF → code scanning hub → attestation) |
-| `reusable-sca-osv` | SCA via OSV-Scanner + dependency-review PR gate |
-| `reusable-scorecard` | OpenSSF Scorecard supply-chain posture |
-| `reusable-trivy` | Container image, IaC misconfiguration, and license scan |
-| `reusable-vex` | OpenVEX vulnerability disposition — sign a VEX document as an attestation |
-| `reusable-zap` | OWASP ZAP DAST full scan (opt-in) |
-| `reusable-k6` | Grafana k6 load / performance gate with optional attestation |
-
-### Attestation Predicate Schemas
-
-Custom predicate type URIs are defined at `https://attested-delivery.github.io/attestations/<gate>/v1`.
-
-### Community Health Defaults
-
-`SECURITY.md`, `CODE_OF_CONDUCT.md`, `CONTRIBUTING.md`, `SUPPORT.md`, issue templates, and PR template — applied org-wide by default.
+Spec, schemas, and reference docs live at **<https://mif-spec.dev>**.
 
 ---
 
-## Core Pattern
+## What MIF supplies (OKF's open questions, answered)
+
+| OKF open design space | MIF's opinionated answer |
+| --- | --- |
+| No concept-type taxonomy | `semantic` / `episodic` / `procedural` base types |
+| Untyped markdown-link edges | Typed relationships (overlay on OKF links) |
+| No merge / contradiction semantics | `Supersedes`, `ConflictsWith` |
+| No trust tiers | Provenance `source_type` + `trust_level` |
+| Stale-vs-live left to process | Validity windows + TTL/freshness |
+| No provenance | W3C PROV |
+| Markdown only | First-class, derived JSON-LD projection |
+
+- **Markdown** (`.md`) is canonical, human-readable, Obsidian-compatible.
+- **JSON-LD** is a derived, regenerable projection — never hand-edited.
+- Stable UUID identity survives concept relocation; JSON Schema validates the
+  projection.
+
+---
+
+## How releases here are delivered
+
+The MIF org ships its specifications, schemas, and tooling through a
+**signed, SLSA-attested, fail-closed-verified** release backbone — centralized
+reusable signing/verification workflows live in this `.github` repo and are
+consumed by every project repo.
 
 ```text
-build → gate (SAST/SCA/scan/...) → attest evidence → verify all gates → deploy
+build → gate (SAST/SCA/scan/...) → attest evidence → verify all gates → publish
 ```
 
-Every gate produces evidence. Every piece of evidence is signed and bound to the artifact digest. Deployment is gated on verification — not on the gate having run, but on its attestation being present and valid.
+Every gate produces evidence; every piece of evidence is signed and bound to the
+artifact digest; publication is gated on verification, not on the gate merely
+having run. Consumers verify independently with `gh attestation verify`.
 
----
-
-## Principles
+### Principles
 
 1. **Verification over trust** — consumers verify; they do not take the producer's word for it.
 2. **Fail closed** — an absent or invalid attestation stops the pipeline.
 3. **Ephemeral credentials only** — all signing uses the GitHub OIDC token; no long-lived secrets.
-4. **SHA-pinned always** — every `uses:` is pinned to a full 40-char commit SHA. Floating tags are a supply-chain risk.
+4. **SHA-pinned always** — every `uses:` is pinned to a full 40-char commit SHA.
 
 ---
 
 ## Getting Started
 
-- Read [`SECURITY.md`](https://github.com/attested-delivery/.github/blob/main/SECURITY.md) to understand how to verify release artifacts.
-- Read [`CONTRIBUTING.md`](https://github.com/attested-delivery/.github/blob/main/CONTRIBUTING.md) to propose changes to the shared workflows.
-- Browse `.github/workflows/` for the reusable workflow reference.
+- Read the specification at **<https://mif-spec.dev>**.
+- Read [`SECURITY.md`](https://github.com/modeled-information-format/.github/blob/main/SECURITY.md) to verify release artifacts.
+- Read [`CONTRIBUTING.md`](https://github.com/modeled-information-format/.github/blob/main/CONTRIBUTING.md) to propose changes.
+- Browse `.github/workflows/` for the reusable quality-gate and signing workflows.
 
 ---

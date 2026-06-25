@@ -16,14 +16,14 @@
 # `report-artifact` / `report-filename` outputs, so the attestation seam
 # (reusable-attest-scan.yml) can sign the DAST verdict bound to a release
 # subject under predicate-type
-# https://attested-delivery.github.io/attestations/dast/v1.
+# https://modeled-information-format.github.io/attestations/dast/v1.
 #
 # Usage:
 #   jobs:
 #     gate-dast:
 #       permissions:
 #         contents: read
-#       uses: attested-delivery/.github/.github/workflows/reusable-zap.yml@<sha>
+#       uses: modeled-information-format/.github/.github/workflows/reusable-zap.yml@<sha>
 #       with:
 #         target: https://staging.example.com
 
