@@ -1,0 +1,29 @@
+# DAST gate (OWASP ZAP) — opt-in scaffold.
+#
+# This repo has no deployed application, so DAST has no standing target. It runs
+# ONLY on manual dispatch against a URL you supply; app repos consume
+# reusable-zap.yml directly in their own pipelines.
+#
+# NOTE: running this requires `zaproxy/action-full-scan` to be on the org Actions
+# allow-list (Org → Settings → Actions). It is not added by default.
+name: dast
+
+"on":
+  workflow_dispatch:
+    inputs:
+      target-url:
+        description: 'URL of a running target to DAST-scan (e.g. https://staging.example.com)'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  dast:
+    name: dast
+    permissions:
+      contents: read
+    uses: ./.github/workflows/reusable-zap.yml
+    with:
+      target: ${{ inputs.target-url }}
