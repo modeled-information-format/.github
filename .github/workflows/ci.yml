@@ -1,0 +1,16 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  actionlint:
+    name: actionlint
+    permissions:
+      contents: read
+    uses: modeled-information-format/.github/.github/workflows/reusable-actionlint.yml@e5f42faca6bc9f9a2bc62ddbca9340445771cf66
