@@ -45,6 +45,11 @@
         description: "Org automation identity for modeled-information-format (repo provisioning, agentic workflows, cross-repo dispatch). Signing uses ephemeral GITHUB_TOKEN+OIDC, not this App.",
         redirect_url: "http://localhost:8723/callback",
         public: false,
+        // GitHub's manifest flow REQUIRES a webhook url. This App is a
+        // token-minting identity, not webhook-driven, so the hook is created
+        // inactive (active:false) and never delivers. Point it at a real
+        // endpoint and flip active:true only if you later need webhooks.
+        hook_attributes: { url: "https://modeled-information-format.github.io/", active: false },
         default_events: ["pull_request", "push", "release", "workflow_run", "check_run"],
         default_permissions: {
           contents: "write", metadata: "read", pull_requests: "write",
