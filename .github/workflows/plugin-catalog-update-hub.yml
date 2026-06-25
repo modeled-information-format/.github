@@ -1,0 +1,138 @@
+---
+name: plugin-catalog-update-hub
+
+# Central, verify-first catalog-updater hub.
+#
+# For every marketplace repo the attested-delivery-ci App can access that holds a
+# .claude-plugin/marketplace.json (minus catalog-update/deny-list.yaml), re-pin
+# each EXTERNAL plugin entry to its latest ATTESTED release and open a zero-touch
+# auto-merge PR whose body carries the full attestation evidence. Discovery is
+# App-install-scoped: opting a repo in = installing the App on it. The cross-repo
+# write credential is a per-target-scoped App token (least privilege); the
+# fail-closed catalog-admission gate in each target is the merge control.
+
+"on":
+  schedule:
+    - cron: "37 6 * * 1" # Mondays, scattered minute (never :00)
+  workflow_dispatch:
+    inputs:
+      dry-run:
+        description: "Resolve + verify + render, but open/merge nothing"
+        type: boolean
+        default: false
+      repo:
+        description: "Limit the run to a single owner/repo (optional)"
+        type: string
+        default: ""
+
+permissions:
+  contents: read
+
+jobs:
+  discover:
+    name: discover marketplaces
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      matrix: ${{ steps.build.outputs.matrix }}
+      has-targets: ${{ steps.build.outputs.has-targets }}
+    steps:
+      - name: Checkout (.github — for the deny-list)
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Mint installation token (enumerate accessible repos)
+        id: token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          client-id: ${{ vars.CATALOG_UPDATER_APP_CLIENT_ID }}
+          private-key: ${{ secrets.CATALOG_UPDATER_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+
+      - name: Discover marketplace repos → matrix
+        id: build
+        env:
+          GH_TOKEN: ${{ steps.token.outputs.token }}
+          ONLY_REPO: ${{ inputs.repo }}
+        run: |
+          set -euo pipefail
+          # Deny-list: YAML list items under `deny:`; dep-free parse.
+          deny=""
+          if [ -f catalog-update/deny-list.yaml ]; then
+            deny="$(grep -E '^\s*-\s+' catalog-update/deny-list.yaml \
+              | sed -E 's/^\s*-\s+//; s/#.*$//; s/\s+$//' || true)"
+          fi
+          is_denied() { printf '%s\n' "${deny}" | grep -Fxq "$1"; }
+
+          include="[]"
+          while IFS= read -r repo; do
+            [ -n "${repo}" ] || continue
+            if [ -n "${ONLY_REPO}" ] && [ "${repo}" != "${ONLY_REPO}" ]; then
+              continue
+            fi
+            if is_denied "${repo}"; then
+              echo "::notice::${repo} is on the deny-list — skipping"
+              continue
+            fi
+            # Keep only repos that actually carry a marketplace catalog.
+            if gh api "repos/${repo}/contents/.claude-plugin/marketplace.json" \
+                --jq '.path' >/dev/null 2>&1; then
+              echo "discovered marketplace: ${repo}"
+              include="$(jq -c \
+                --arg r "${repo}" \
+                '. + [{repo: $r, name: ($r | split("/")[1]), marketplace: ".claude-plugin/marketplace.json"}]' \
+                <<<"${include}")"
+            fi
+          done < <(gh api --paginate installation/repositories \
+                     --jq '.repositories[].full_name')
+
+          matrix="$(jq -c -n --argjson inc "${include}" '{include: $inc}')"
+          echo "matrix=${matrix}" >>"${GITHUB_OUTPUT}"
+          if [ "$(jq 'length' <<<"${include}")" -gt 0 ]; then
+            echo "has-targets=true" >>"${GITHUB_OUTPUT}"
+          else
+            echo "has-targets=false" >>"${GITHUB_OUTPUT}"
+            echo "::notice::no marketplace repos discovered — nothing to do"
+          fi
+
+  update:
+    name: update ${{ matrix.repo }}
+    needs: discover
+    if: needs.discover.outputs.has-targets == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.discover.outputs.matrix) }}
+    steps:
+      - name: Mint App token (scoped to this target repo)
+        id: token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          client-id: ${{ vars.CATALOG_UPDATER_APP_CLIENT_ID }}
+          private-key: ${{ secrets.CATALOG_UPDATER_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: ${{ matrix.name }}
+
+      - name: Checkout target marketplace
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          repository: ${{ matrix.repo }}
+          token: ${{ steps.token.outputs.token }}
+          fetch-depth: 0
+
+      - name: Checkout updater action (.github)
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          path: .updater
+          sparse-checkout: .github/actions/plugin-catalog-update
+
+      - name: Run verify-first re-pin
+        uses: ./.updater/.github/actions/plugin-catalog-update
+        with:
+          mode: update
+          repo: ${{ matrix.repo }}
+          marketplace-path: ${{ matrix.marketplace }}
+          github-token: ${{ steps.token.outputs.token }}
+          dry-run: ${{ inputs.dry-run || false }}

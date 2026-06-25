@@ -1,0 +1,94 @@
+---
+name: attest-release
+
+# Every release in this org is attested — even a source archive. This packages
+# the repo at the release tag as a tarball, generates a CycloneDX SBOM, and binds
+# SLSA build provenance + the SBOM to the tarball's sha256 digest (keyless, via
+# the run's OIDC id-token), then uploads the artifact + SBOM to the release. The
+# attestations are independently re-verifiable with `gh attestation verify`.
+#
+# Runs automatically on release publish; re-attest an existing tag (e.g. v0.1.0)
+# via workflow_dispatch.
+
+"on":
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing release tag to (re)attest (e.g. v0.1.0)"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  attest:
+    name: attest release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # upload assets to the release
+      id-token: write # keyless Sigstore signing
+      attestations: write # persist the attestations
+    steps:
+      - name: Resolve tag
+        id: tag
+        env:
+          EVENT_TAG: ${{ github.event.release.tag_name }}
+          INPUT_TAG: ${{ inputs.tag }}
+        run: |
+          set -euo pipefail
+          TAG="${INPUT_TAG:-${EVENT_TAG}}"
+          TAG="${TAG#refs/tags/}"   # accept a full ref; reduce to the tag name
+          [ -n "${TAG}" ] || { echo "::error::no release tag resolved"; exit 1; }
+          case "${TAG}" in
+            */*) echo "::error::invalid tag '${TAG}' (must be a bare tag name, no '/')"; exit 1 ;;
+          esac
+          echo "tag=${TAG}" >>"${GITHUB_OUTPUT}"
+          echo "version=${TAG#v}" >>"${GITHUB_OUTPUT}"
+
+      - name: Checkout at the tag
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          ref: ${{ steps.tag.outputs.tag }}
+
+      - name: Package source tarball
+        id: pkg
+        env:
+          TAG: ${{ steps.tag.outputs.tag }}
+          VERSION: ${{ steps.tag.outputs.version }}
+        run: |
+          set -euo pipefail
+          ART="attested-delivery-${VERSION}.tar.gz"
+          git archive --format=tar.gz --prefix="attested-delivery-${VERSION}/" -o "${ART}" "${TAG}"
+          echo "artifact=${ART}" >>"${GITHUB_OUTPUT}"
+          echo "sbom=${ART}.cyclonedx.json" >>"${GITHUB_OUTPUT}"
+          sha256sum "${ART}"
+
+      - name: Generate CycloneDX SBOM
+        uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610 # v0.24.0
+        with:
+          path: .
+          format: cyclonedx-json
+          output-file: ${{ steps.pkg.outputs.sbom }}
+          upload-artifact: false
+
+      - name: Attest SLSA build provenance
+        uses: actions/attest-build-provenance@a2bbfa25375fe432b6a289bc6b6cd05ecd0c4c32 # v4.1.0
+        with:
+          subject-path: ${{ steps.pkg.outputs.artifact }}
+
+      - name: Attest the CycloneDX SBOM
+        uses: actions/attest-sbom@c604332985a26aa8cf1bdc465b92731239ec6b9e # v4.1.0
+        with:
+          subject-path: ${{ steps.pkg.outputs.artifact }}
+          sbom-path: ${{ steps.pkg.outputs.sbom }}
+
+      - name: Upload artifact + SBOM to the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.tag.outputs.tag }}
+          ART: ${{ steps.pkg.outputs.artifact }}
+          SBOM: ${{ steps.pkg.outputs.sbom }}
+        run: gh release upload "${TAG}" "${ART}" "${SBOM}" --clobber

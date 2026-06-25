@@ -1,0 +1,19 @@
+{
+  "name": "attested-delivery",
+  "version": "0.1.0",
+  "description": "Signed, SLSA-attested, fail-closed-verified releases — central reusable signing/seam/verify workflows and independent gh attestation verify.",
+  "author": {
+    "name": "attested-delivery"
+  },
+  "homepage": "https://attested-delivery.github.io/docs/",
+  "repository": "https://github.com/attested-delivery/.github",
+  "keywords": [
+    "slsa",
+    "attestation",
+    "supply-chain",
+    "sigstore",
+    "sbom",
+    "ci-cd",
+    "release-signing"
+  ]
+}

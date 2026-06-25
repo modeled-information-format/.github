@@ -1,0 +1,117 @@
+# Reusable workflow: SCA via OSV-Scanner + GitHub dependency review.
+#
+# Two complementary free layers (Dependabot alerts are the third, configured at
+# the repo level and outside this workflow):
+#   - OSV-Scanner (Google, Apache-2.0): an independent second opinion against
+#     the OSV database across lockfiles and ecosystems; uploads SARIF to the
+#     code-scanning hub.
+#   - dependency-review-action: the PR merge gate — fails the check when a PR
+#     introduces a vulnerable dependency or a disallowed license. Public-repo
+#     free.
+#
+# Usage:
+#   jobs:
+#     sca:
+#       permissions:
+#         actions: read
+#         contents: read
+#         security-events: write
+#         pull-requests: write
+#       uses: attested-delivery/.github/.github/workflows/reusable-sca-osv.yml@<sha>
+#       with:
+#         fail-on-severity: high
+
+name: sca-osv
+
+on:
+  workflow_call:
+    inputs:
+      fail-on-severity:
+        description: 'dependency-review threshold: low | moderate | high | critical'
+        required: false
+        type: string
+        default: 'high'
+      scan-args:
+        description: 'OSV-Scanner arguments'
+        required: false
+        type: string
+        default: |-
+          --recursive
+          ./
+    outputs:
+      # The OSV reusable (pinned by SHA above) uploads its SARIF under this
+      # fixed artifact name; the attestation seam downloads it by this name.
+      sarif-artifact:
+        description: 'Artifact name holding the OSV SARIF (attestation seam)'
+        value: 'OSV Scanner SARIF file'
+      sarif-filename:
+        description: 'SARIF filename within the artifact'
+        value: results.sarif
+
+permissions:
+  contents: read
+
+jobs:
+  # OSV-Scanner run INLINE via its actions (osv-scanner-action + osv-reporter-action)
+  # rather than Google's nested reusable workflow. A nested external reusable
+  # workflow cannot be permitted by an org's "Allow select actions" policy, but
+  # the actions allow-list like any third-party action (e.g. aquasecurity/trivy).
+  # This faithfully replicates osv-scanner-reusable.yml@v2.3.8: scan -> JSON ->
+  # SARIF -> upload artifact "OSV Scanner SARIF file" -> code scanning.
+  osv-scan:
+    name: osv-scanner
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - name: Run OSV-Scanner
+        uses: google/osv-scanner-action/osv-scanner-action@fa4ff678dd5d0a4fa3d628e57af8162873e93cd6 # v2.3.8
+        continue-on-error: true
+        with:
+          scan-args: |-
+            --output=results.json
+            --format=json
+            ${{ inputs.scan-args }}
+      - name: Generate SARIF report
+        uses: google/osv-scanner-action/osv-reporter-action@fa4ff678dd5d0a4fa3d628e57af8162873e93cd6 # v2.3.8
+        with:
+          scan-args: |-
+            --output=results.sarif
+            --new=results.json
+            --gh-annotations=false
+            --fail-on-vuln=true
+      - name: Upload SARIF artifact
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: OSV Scanner SARIF file
+          path: results.sarif
+          retention-days: 5
+      - name: Upload to code scanning
+        if: ${{ !cancelled() }}
+        uses: github/codeql-action/upload-sarif@8aad20d150bbac5944a9f9d289da16a4b0d87c1e # v4.36.2
+        with:
+          sarif_file: results.sarif
+
+  dependency-review:
+    name: dependency-review
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Dependency review
+        uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294 # v5.0.0
+        with:
+          fail-on-severity: ${{ inputs.fail-on-severity }}
+          comment-summary-in-pr: on-failure

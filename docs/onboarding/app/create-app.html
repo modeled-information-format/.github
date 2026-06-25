@@ -1,0 +1,58 @@
+<!doctype html>
+<!--
+  GitHub App manifest-flow launcher for the attested-delivery org.
+
+  Why this file exists: GitHub has no REST endpoint to create an App from
+  scratch with a PAT. The manifest flow is the only non-manual path — it
+  POSTs the manifest to the org's app-creation URL; on submit GitHub
+  redirects back with a temporary `code` you exchange (once, within 1h) for
+  the App id + private key (.pem). The private key is shown ONCE and is never
+  stored in this repo.
+
+  HOW TO USE:
+    1. Open this file in a browser while signed in to GitHub as an
+       attested-delivery org owner:  open app/create-app.html
+    2. Click "Create attested-delivery-ci App". You land on GitHub's
+       app-creation confirmation page pre-filled from the manifest.
+    3. Confirm. GitHub redirects to a localhost URL containing ?code=...
+       (the page won't load — that's fine; copy the `code` from the address
+       bar).
+    4. Exchange the code for credentials:
+         gh api -X POST /app-manifests/<code>/conversions --jq \
+           '{id, slug, html_url, pem: (.pem|length)}'
+       (Save the returned `pem` to a SECURE location OUTSIDE any repo, e.g.
+        a password manager or `~/.secrets/attested-delivery-ci.pem`. Never
+        commit it.)
+    5. Install the App org-wide:  open the html_url, click Install,
+       select "All repositories".
+    6. Hand back the `slug` and `id` so workflows/runbook can reference it.
+-->
+<html lang="en">
+  <head><meta charset="utf-8" /><title>Create attested-delivery-ci App</title></head>
+  <body>
+    <h1>Create the <code>attested-delivery-ci</code> GitHub App</h1>
+    <p>Posts the manifest to the <strong>attested-delivery</strong> org. You must be an org owner.</p>
+    <form id="f" action="https://github.com/organizations/attested-delivery/settings/apps/new" method="post">
+      <input type="hidden" name="manifest" id="manifest" />
+      <button type="submit">Create attested-delivery-ci App</button>
+    </form>
+    <script>
+      // Manifest mirrors app/manifest.json. redirect_url is a throwaway
+      // localhost target; we read the ?code= from the address bar by hand.
+      const manifest = {
+        name: "attested-delivery-ci",
+        url: "https://github.com/attested-delivery",
+        description: "Org automation identity for attested-delivery (repo provisioning, agentic workflows, cross-repo dispatch). Signing uses ephemeral GITHUB_TOKEN+OIDC, not this App.",
+        redirect_url: "http://localhost:8723/callback",
+        public: false,
+        default_events: ["pull_request", "push", "release", "workflow_run", "check_run"],
+        default_permissions: {
+          contents: "write", metadata: "read", pull_requests: "write",
+          issues: "write", actions: "write", checks: "write",
+          attestations: "write", administration: "read", members: "read"
+        }
+      };
+      document.getElementById("manifest").value = JSON.stringify(manifest);
+    </script>
+  </body>
+</html>

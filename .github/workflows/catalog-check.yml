@@ -1,0 +1,64 @@
+# Repo-CI gate (not a reusable): keep the attested-delivery plugin's workflow
+# catalog honest. Every reusable (workflow_call) workflow under .github/workflows/
+# must have an entry in the skill's workflow-catalog.md, and every workflow the
+# catalog names must resolve to a real file. Prevents the "docs say 14, repo ships
+# 19" drift that a hand-maintained index otherwise accumulates as workflows evolve.
+name: catalog-check
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/**'
+      - '.github/skills/attested-delivery/references/workflow-catalog.md'
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/**'
+      - '.github/skills/attested-delivery/references/workflow-catalog.md'
+
+permissions:
+  contents: read
+
+jobs:
+  catalog-completeness:
+    name: catalog-completeness
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Catalog and workflows are in sync
+        run: |
+          set -euo pipefail
+          catalog=.github/skills/attested-delivery/references/workflow-catalog.md
+          test -f "$catalog" || { echo "::error::catalog not found: $catalog"; exit 1; }
+          rc=0
+
+          # Forward: every workflow_call reusable must be documented. Non-reusable
+          # workflows (this gate included) have no workflow_call block and are skipped.
+          for f in .github/workflows/*.yml; do
+            grep -qE '^[[:space:]]*workflow_call:' "$f" || continue
+            base="$(basename "$f")"
+            if ! grep -qF "workflows/${base}" "$catalog"; then
+              echo "::error file=${catalog}::undocumented reusable: ${base} has no catalog entry"
+              rc=1
+            fi
+          done
+
+          # Reverse: every workflow the catalog names must exist on disk.
+          while read -r p; do
+            [ -n "$p" ] || continue
+            if [ ! -f "$p" ]; then
+              echo "::error file=${catalog}::catalog references a missing workflow: ${p}"
+              rc=1
+            fi
+          done < <(grep -oE '\$\{CLAUDE_PLUGIN_ROOT\}/workflows/[A-Za-z0-9._-]+\.yml' "$catalog" \
+                     | sed 's#.*/workflows/#.github/workflows/#' | sort -u)
+
+          if [ "$rc" -ne 0 ]; then
+            echo "Catalog is out of sync with .github/workflows/ — update workflow-catalog.md."
+            exit 1
+          fi
+          echo "catalog-completeness: every reusable is documented and every entry resolves."

@@ -1,0 +1,153 @@
+# Reusable workflow: manifest review — declarative-constituent integrity gate.
+#
+# Reviews the marketplace catalog and each plugin manifest for the structural
+# integrity invariants the marketplace depends on (report Pillar 3 + manifest/
+# allowed-tools review):
+#   - every EXTERNAL plugin source (github / url / git-subdir) is pinned to a
+#     full 40-char `sha` (defeats rug-pull catalog updates);
+#   - the marketplace `name` is not an Anthropic-reserved name;
+#   - marketplace.json and every plugin.json carry their required fields.
+# Findings normalize on SARIF → code-scanning hub, and seam-attest as a
+# `manifest/v1` verdict. Pure stdlib Python (jq-free) — no install, no
+# third-party action, no allow-list entry. SOFT-FAIL: report, don't fail the job.
+#
+# Usage:
+#   jobs:
+#     manifest-review:
+#       permissions:
+#         contents: read
+#         security-events: write
+#         actions: read
+#       uses: attested-delivery/.github/.github/workflows/reusable-manifest-review.yml@<sha>
+#       with:
+#         directory: .
+
+name: manifest-review
+
+on:
+  workflow_call:
+    inputs:
+      directory:
+        description: 'Repo root to review'
+        required: false
+        type: string
+        default: '.'
+    outputs:
+      sarif-artifact:
+        description: 'Artifact name holding the manifest-review SARIF (attestation seam)'
+        value: manifest-sarif
+      sarif-filename:
+        description: 'Manifest-review SARIF filename within the artifact'
+        value: manifest-review.sarif
+
+permissions:
+  contents: read
+
+jobs:
+  manifest-review:
+    name: manifest-review
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+      actions: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Review manifests → SARIF (soft-fail)
+        env:
+          SCAN_DIR: ${{ inputs.directory }}
+        run: |
+          set -euo pipefail
+          python3 - "${SCAN_DIR}" > manifest-review.sarif <<'PY'
+          import json, os, re, sys
+          root = sys.argv[1]
+          SHA = re.compile(r'^[0-9a-f]{40}$')
+          RESERVED = {
+              "claude-code-marketplace", "claude-code-plugins", "claude-plugins-official",
+              "claude-plugins-community", "claude-community", "anthropic-marketplace",
+              "anthropic-plugins", "agent-skills", "anthropic-agent-skills",
+              "knowledge-work-plugins", "life-sciences", "claude-for-legal",
+              "claude-for-financial-services", "financial-services-plugins",
+          }
+          results = []
+
+          def add(rule, level, text, path, line=1):
+              results.append({"ruleId": rule, "level": level,
+                  "message": {"text": text},
+                  "locations": [{"physicalLocation": {
+                      "artifactLocation": {"uri": path},
+                      "region": {"startLine": line}}}]})
+
+          def rel(p):
+              return os.path.relpath(p, root).replace(os.sep, "/")
+
+          # --- marketplace catalogs ---
+          for dirpath, _dirs, files in os.walk(root):
+              if ".git" in dirpath.split(os.sep):
+                  continue
+              for fn in files:
+                  full = os.path.join(dirpath, fn)
+                  if fn == "marketplace.json" and ".claude-plugin" in dirpath:
+                      try:
+                          with open(full, encoding="utf-8") as fh:
+                              mp = json.load(fh)
+                      except Exception as e:
+                          add("MR001", "error", "marketplace.json is not valid JSON: %s" % e, rel(full)); continue
+                      if not mp.get("name"):
+                          add("MR002", "error", "marketplace.json missing required 'name'", rel(full))
+                      elif mp["name"] in RESERVED:
+                          add("MR003", "error", "marketplace name '%s' is Anthropic-reserved" % mp["name"], rel(full))
+                      if not (mp.get("owner") or {}).get("name"):
+                          add("MR004", "error", "marketplace.json missing required 'owner.name'", rel(full))
+                      for i, p in enumerate(mp.get("plugins", [])):
+                          src = p.get("source")
+                          name = p.get("name", "plugins[%d]" % i)
+                          if not name or not src:
+                              add("MR005", "error", "plugin entry '%s' missing required name/source" % name, rel(full))
+                          # External (object) sources MUST be SHA-pinned.
+                          if isinstance(src, dict) and src.get("source") in ("github", "url", "git-subdir"):
+                              sha = src.get("sha", "")
+                              if not SHA.match(str(sha)):
+                                  add("MR006", "error",
+                                      "external plugin '%s' source is not pinned to a 40-char sha (got %r)" % (name, sha),
+                                      rel(full))
+                  elif fn == "plugin.json" and ".claude-plugin" in dirpath:
+                      try:
+                          with open(full, encoding="utf-8") as fh:
+                              pl = json.load(fh)
+                      except Exception as e:
+                          add("MR007", "error", "plugin.json is not valid JSON: %s" % e, rel(full)); continue
+                      for req in ("name", "description"):
+                          if not pl.get(req):
+                              add("MR008", "error", "plugin.json missing required '%s'" % req, rel(full))
+                      if not (pl.get("author") or {}).get("name"):
+                          add("MR009", "error", "plugin.json missing required 'author.name'", rel(full))
+
+          sarif = {"version": "2.1.0",
+                   "$schema": "https://json.schemastore.org/sarif-2.1.0.json",
+                   "runs": [{"tool": {"driver": {"name": "manifest-review",
+                             "informationUri": "https://github.com/attested-delivery/.github",
+                             "rules": [{"id": r} for r in sorted({x["ruleId"] for x in results})]}},
+                             "results": results}]}
+          print(json.dumps(sarif))
+          n = len(results)
+          sys.stderr.write("manifest-review: %d finding(s)\n" % n)
+          PY
+          echo "Wrote manifest-review.sarif ($(python3 -c 'import json;print(len(json.load(open("manifest-review.sarif"))["runs"][0]["results"]))') finding(s))"
+
+      - name: Upload manifest-review SARIF
+        if: always()
+        uses: github/codeql-action/upload-sarif@8aad20d150bbac5944a9f9d289da16a4b0d87c1e # v4.36.2
+        with:
+          sarif_file: manifest-review.sarif
+          category: manifest-review
+
+      - name: Upload manifest-review SARIF artifact
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: manifest-sarif
+          path: manifest-review.sarif
+          if-no-files-found: error

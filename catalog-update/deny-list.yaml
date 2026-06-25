@@ -1,0 +1,9 @@
+# Catalog-updater deny-list.
+#
+# Repos the plugin-catalog-update-hub must NEVER touch, even when the
+# attested-delivery-ci App is installed on them and they carry a
+# .claude-plugin/marketplace.json. This is the safety valve for when the App is
+# installed org-wide ("all repositories") but a given marketplace should be
+# updated by hand. List full `owner/repo` names.
+deny: []
+  # - attested-delivery/some-manually-curated-marketplace

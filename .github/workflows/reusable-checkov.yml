@@ -1,0 +1,126 @@
+# Reusable workflow: Checkov — IaC policy-as-code (graph-based).
+#
+# Complements reusable-trivy.yml (misconfig + license). Where Trivy's IaC
+# scanner is rule/AVD-based, Checkov adds a graph/dataflow engine, a distinct
+# policy catalog, secrets detection, and custom-policy support. The two are
+# deliberately NOT redundant: they emit separate SARIF categories and bind to
+# separate attestation predicates (iac-misconfig vs iac-policy), so a verdict
+# from each travels with the release.
+#
+# Like reusable-trivy.yml's IaC job, findings normalize on SARIF and land in the
+# code-scanning hub: the "Code scanning results" check is the merge gate. The
+# job itself is SOFT-FAIL (does not fail on findings) so callers stay green and
+# triage advisories via code scanning + VEX disposition.
+#
+# Checkov is installed via pip (pinned exact version) — NO third-party action is
+# referenced, so this adds nothing to the org Actions allow-list.
+#
+# Usage:
+#   jobs:
+#     checkov:
+#       permissions:
+#         contents: read
+#         security-events: write
+#         actions: read
+#       uses: attested-delivery/.github/.github/workflows/reusable-checkov.yml@<sha>
+#       with:
+#         directory: .
+
+name: checkov
+
+on:
+  workflow_call:
+    inputs:
+      directory:
+        description: 'Directory to scan'
+        required: false
+        type: string
+        default: '.'
+      framework:
+        description: 'Checkov framework(s) to run (e.g. terraform, terraform_plan)'
+        required: false
+        type: string
+        default: 'terraform'
+      checkov-version:
+        description: 'Exact Checkov version to install (pinned, no range)'
+        required: false
+        type: string
+        default: '3.2.524'
+    outputs:
+      sarif-artifact:
+        description: 'Artifact name holding the Checkov SARIF (attestation seam)'
+        value: iac-policy-sarif
+      sarif-filename:
+        description: 'Checkov SARIF filename within the artifact'
+        value: checkov-iac-policy.sarif
+
+permissions:
+  contents: read
+
+jobs:
+  iac-policy:
+    name: iac-policy
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+      actions: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      # Install Checkov from PyPI at an exact pinned version into an isolated
+      # virtualenv — no setup-python or third-party action needed. The venv keeps
+      # resolution off the runner's preinstalled site-packages, so the install is
+      # reproducible from the pinned version alone. (Top-level pin only; full
+      # transitive hash-locking is a documented follow-up — see PR discussion.)
+      - name: Install Checkov (pinned)
+        env:
+          CHECKOV_VERSION: ${{ inputs.checkov-version }}
+        run: |
+          set -euo pipefail
+          python3 -m venv "${RUNNER_TEMP}/checkov-venv"
+          "${RUNNER_TEMP}/checkov-venv/bin/pip" install --no-cache-dir --disable-pip-version-check \
+            "checkov==${CHECKOV_VERSION}"
+          echo "${RUNNER_TEMP}/checkov-venv/bin" >> "$GITHUB_PATH"
+
+      - name: Checkov IaC policy scan (soft-fail)
+        env:
+          SCAN_DIR: ${{ inputs.directory }}
+          FRAMEWORK: ${{ inputs.framework }}
+        run: |
+          set -euo pipefail
+          # Soft-fail: report to SARIF/code-scanning, do not fail the job. The
+          # code-scanning required check is the merge gate (see header).
+          checkov \
+            --directory "${SCAN_DIR}" \
+            --framework "${FRAMEWORK}" \
+            --output sarif \
+            --output-file-path checkov-out \
+            --soft-fail \
+            --quiet
+          # Locate the SARIF file by extension rather than assuming a fixed
+          # filename (Checkov's output filename has varied across versions).
+          sarif="$(find checkov-out -maxdepth 1 -name '*.sarif' | head -n1)"
+          if [ -z "${sarif}" ]; then
+            echo "::error::Checkov produced no SARIF file in checkov-out/"
+            exit 1
+          fi
+          mv "${sarif}" checkov-iac-policy.sarif
+          echo "Wrote checkov-iac-policy.sarif (from ${sarif})"
+
+      - name: Upload Checkov SARIF
+        if: always()
+        uses: github/codeql-action/upload-sarif@8aad20d150bbac5944a9f9d289da16a4b0d87c1e # v4.36.2
+        with:
+          sarif_file: checkov-iac-policy.sarif
+          category: checkov-iac-policy
+
+      # Expose the SARIF as a downloadable artifact for the attestation seam.
+      - name: Upload Checkov SARIF artifact
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: iac-policy-sarif
+          path: checkov-iac-policy.sarif
+          if-no-files-found: error

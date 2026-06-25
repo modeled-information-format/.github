@@ -1,0 +1,112 @@
+# Reusable workflow: Semgrep — SAST for bundled MCP-server / plugin source code.
+#
+# Plugin-bundled MCP servers and other source run locally with full user
+# privileges — a direct RCE vector. Semgrep statically analyzes the source for
+# command injection, eval/new Function, os.system, subprocess shell=True, unsafe
+# deserialization, etc. Findings emit as native SARIF → code-scanning hub and
+# seam-attest as a `semgrep/v1` verdict.
+#
+# Semgrep is installed via pip (pinned, isolated venv) — no third-party action,
+# no allow-list entry. Rulesets are the registry security packs (no login token
+# needed). SOFT-FAIL: report to code scanning (the gate), don't fail the job.
+#
+# CAVEAT (report Pillar 2): SAST is risk-reducing, not risk-eliminating — Semgrep
+# suppresses findings when partial safety checks are present and cannot prove the
+# absence of a pattern across files. This verdict is one layer, not proof.
+#
+# Usage:
+#   jobs:
+#     semgrep:
+#       permissions:
+#         contents: read
+#         security-events: write
+#         actions: read
+#       uses: attested-delivery/.github/.github/workflows/reusable-semgrep.yml@<sha>
+#       with:
+#         directory: .
+
+name: semgrep
+
+on:
+  workflow_call:
+    inputs:
+      directory:
+        description: 'Directory to scan'
+        required: false
+        type: string
+        default: '.'
+      config:
+        description: 'Semgrep rule config(s), space-separated (registry packs or paths)'
+        required: false
+        type: string
+        default: 'p/security-audit p/secrets p/command-injection'
+      semgrep-version:
+        description: 'Exact Semgrep version to install (pinned, no range)'
+        required: false
+        type: string
+        default: '1.139.0'
+    outputs:
+      sarif-artifact:
+        description: 'Artifact name holding the Semgrep SARIF (attestation seam)'
+        value: sast-code-sarif
+      sarif-filename:
+        description: 'Semgrep SARIF filename within the artifact'
+        value: semgrep.sarif
+
+permissions:
+  contents: read
+
+jobs:
+  sast-code:
+    name: sast-code
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+      actions: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Install Semgrep (pinned)
+        env:
+          SEMGREP_VERSION: ${{ inputs.semgrep-version }}
+        run: |
+          set -euo pipefail
+          python3 -m venv "${RUNNER_TEMP}/semgrep-venv"
+          "${RUNNER_TEMP}/semgrep-venv/bin/pip" install --no-cache-dir --disable-pip-version-check \
+            "semgrep==${SEMGREP_VERSION}"
+          echo "${RUNNER_TEMP}/semgrep-venv/bin" >> "$GITHUB_PATH"
+
+      - name: Semgrep → SARIF (soft-fail)
+        env:
+          SCAN_DIR: ${{ inputs.directory }}
+          CONFIGS: ${{ inputs.config }}
+        run: |
+          set -euo pipefail
+          cfg=()
+          for c in ${CONFIGS}; do cfg+=(--config "${c}"); done
+          # --error disabled so findings don't fail the job; code scanning is the gate.
+          semgrep scan "${cfg[@]}" \
+            --sarif --output semgrep.sarif \
+            --metrics off --disable-version-check \
+            --no-error "${SCAN_DIR}" || true
+          if [ ! -f semgrep.sarif ]; then
+            echo "::error::Semgrep produced no SARIF"; exit 1
+          fi
+          echo "Wrote semgrep.sarif ($(python3 -c 'import json;print(len(json.load(open("semgrep.sarif"))["runs"][0]["results"]))' 2>/dev/null || echo '?') result(s))"
+
+      - name: Upload Semgrep SARIF
+        if: always()
+        uses: github/codeql-action/upload-sarif@8aad20d150bbac5944a9f9d289da16a4b0d87c1e # v4.36.2
+        with:
+          sarif_file: semgrep.sarif
+          category: semgrep
+
+      - name: Upload Semgrep SARIF artifact
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: sast-code-sarif
+          path: semgrep.sarif
+          if-no-files-found: error

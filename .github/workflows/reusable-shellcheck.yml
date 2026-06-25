@@ -1,0 +1,81 @@
+# Reusable workflow: ShellCheck — SAST for shell scripts (plugin hooks).
+#
+# Claude Code plugin hooks run as arbitrary shell at PreToolUse/PostToolUse/Stop
+# with full user privileges — a direct RCE vector. This gate runs Red Hat's
+# Differential ShellCheck action (full-tree mode), which executes ShellCheck and
+# emits native SARIF straight to the code-scanning hub. We re-expose that SARIF
+# as an artifact so it seam-attests as a `shellcheck/v1` verdict.
+#
+# NOTE: redhat-plumbers-in-action/differential-shellcheck is a third-party action
+# and must be on the org Actions allow-list (`redhat-plumbers-in-action/*`) before
+# this reusable runs.
+#
+# Usage:
+#   jobs:
+#     shellcheck:
+#       permissions:
+#         contents: read
+#         security-events: write
+#       uses: attested-delivery/.github/.github/workflows/reusable-shellcheck.yml@<sha>
+
+name: shellcheck
+
+on:
+  workflow_call:
+    inputs:
+      strict-on-push:
+        description: 'Fail the job on ShellCheck defects for push events'
+        required: false
+        type: boolean
+        default: false
+    outputs:
+      sarif-artifact:
+        description: 'Artifact name holding the ShellCheck SARIF (attestation seam)'
+        value: sast-hooks-sarif
+      sarif-filename:
+        description: 'ShellCheck SARIF filename within the artifact'
+        value: shellcheck.sarif
+
+permissions:
+  contents: read
+
+jobs:
+  sast-hooks:
+    name: sast-hooks
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          fetch-depth: 0
+
+      - name: Differential ShellCheck (full tree → SARIF)
+        id: shellcheck
+        uses: redhat-plumbers-in-action/differential-shellcheck@d965e66ec0b3b2f821f75c8eff9b12442d9a7d1e # v5.5.6
+        with:
+          diff-scan: false
+          strict-check-on-push: ${{ inputs.strict-on-push }}
+          token: ${{ github.token }}
+
+      - name: Normalize SARIF filename for the seam
+        if: always()
+        env:
+          SARIF_PATH: ${{ steps.shellcheck.outputs.sarif }}
+        run: |
+          set -euo pipefail
+          if [ -n "${SARIF_PATH:-}" ] && [ -f "${SARIF_PATH}" ]; then
+            cp "${SARIF_PATH}" shellcheck.sarif
+          else
+            echo '{"version":"2.1.0","runs":[{"tool":{"driver":{"name":"ShellCheck"}},"results":[]}]}' > shellcheck.sarif
+          fi
+
+      - name: Upload ShellCheck SARIF artifact
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: sast-hooks-sarif
+          path: shellcheck.sarif
+          if-no-files-found: error

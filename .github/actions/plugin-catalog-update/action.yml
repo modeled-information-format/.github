@@ -1,0 +1,60 @@
+# Composite action: attested catalog-updater (core logic + shared verify).
+#
+# `mode: update`  — verify-first re-pin of every external plugin entry to its
+#                   latest attested release, opening zero-touch auto-merge PRs.
+# `mode: verify`  — fail-closed verification of every external entry at its
+#                   currently pinned ref (the rule catalog-admission shares).
+#
+# Releases only, never branch HEAD. A bump points at an attested release or it
+# does not happen. The engine (catalog_update.py) is stdlib-only and shells to
+# `gh`; auth is the token passed in `github-token` (an App installation token in
+# the hub, the workflow GITHUB_TOKEN in admission).
+
+name: plugin-catalog-update
+description: Verify-first re-pin / fail-closed verify of external plugin catalog entries.
+
+inputs:
+  mode:
+    description: 'update (re-pin + PR) or verify (fail-closed verify only)'
+    required: false
+    default: update
+  repo:
+    description: 'owner/repo of the marketplace being processed'
+    required: true
+  marketplace-path:
+    description: 'Path to marketplace.json within the checkout'
+    required: false
+    default: .claude-plugin/marketplace.json
+  predicate-types:
+    description: 'Required predicates: one "<uri> [signer-workflow]" per line. Empty = fail closed.'
+    required: false
+    default: https://slsa.dev/provenance/v1
+  github-token:
+    description: 'Token used for gh (App installation token in the hub; GITHUB_TOKEN in admission)'
+    required: true
+  dry-run:
+    description: 'Resolve + verify + render, but open/merge nothing'
+    required: false
+    default: 'false'
+
+runs:
+  using: composite
+  steps:
+    - name: Configure git identity (bot)
+      if: inputs.mode == 'update'
+      shell: bash
+      run: |
+        git config user.name "attested-delivery-ci[bot]"
+        git config user.email "attested-delivery-ci[bot]@users.noreply.github.com"
+
+    - name: Run catalog-updater engine
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.github-token }}
+      run: |
+        python3 "${GITHUB_ACTION_PATH}/catalog_update.py" \
+          --mode "${{ inputs.mode }}" \
+          --repo "${{ inputs.repo }}" \
+          --marketplace "${{ inputs.marketplace-path }}" \
+          --predicates "${{ inputs.predicate-types }}" \
+          ${{ inputs.dry-run == 'true' && '--dry-run' || '' }}

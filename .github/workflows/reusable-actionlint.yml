@@ -1,0 +1,81 @@
+# Reusable workflow: actionlint — workflow-syntax lint with a VERIFIED, pinned
+# download.
+#
+# There is no allow-listed pinned ACTION for actionlint, so the verified fetch
+# (download -> `sha256sum -c` a pinned digest -> run, fail-closed under
+# `set -euo pipefail`) lives HERE, once, instead of being reinvented in every
+# caller. Callers consume it as a thin caller pinned to this repo's commit SHA.
+#
+# Override `version` and `sha256` TOGETHER — the default sha256 matches the
+# default version. Resolve a new digest from the release's published checksums
+# (`actionlint_<version>_checksums.txt`), never from memory.
+#
+# TODO: upgrade the integrity floor to `gh attestation verify` / cosign
+# verify-blob when rhysd/actionlint ships Sigstore-signed provenance for its
+# release artifacts.
+#
+# Usage:
+#   jobs:
+#     actionlint:
+#       permissions:
+#         contents: read
+#       uses: attested-delivery/.github/.github/workflows/reusable-actionlint.yml@<sha>
+
+name: actionlint
+
+on:
+  workflow_call:
+    inputs:
+      version:
+        description: 'actionlint release version (no leading v)'
+        required: false
+        type: string
+        default: '1.7.7'
+      sha256:
+        description: 'sha256 of actionlint_<version>_linux_amd64.tar.gz (must match version)'
+        required: false
+        type: string
+        default: '023070a287cd8cccd71515fedc843f1985bf96c436b7effaecce67290e7e0757'
+      files:
+        description: 'Space-separated globs to lint (default: all under .github/workflows)'
+        required: false
+        type: string
+        default: ''
+
+permissions:
+  contents: read
+
+jobs:
+  actionlint:
+    name: actionlint
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
+      - name: Install actionlint (pinned + checksum-verified, fail-closed)
+        env:
+          VERSION: ${{ inputs.version }}
+          SHA256: ${{ inputs.sha256 }}
+        run: |
+          set -euo pipefail
+          install_dir="${RUNNER_TEMP}/actionlint"
+          mkdir -p "${install_dir}"
+          curl -sSfL -o actionlint.tar.gz \
+            "https://github.com/rhysd/actionlint/releases/download/v${VERSION}/actionlint_${VERSION}_linux_amd64.tar.gz"
+          echo "${SHA256}  actionlint.tar.gz" | sha256sum -c -
+          tar xzf actionlint.tar.gz -C "${install_dir}" actionlint
+          chmod +x "${install_dir}/actionlint"
+          echo "${install_dir}" >> "${GITHUB_PATH}"
+          # Call by full path: $GITHUB_PATH only affects *subsequent* steps, so
+          # `actionlint` is not yet on PATH within this step (a bare call exits
+          # 127). The next step ("Run actionlint") resolves it via $GITHUB_PATH.
+          "${install_dir}/actionlint" --version
+      - name: Run actionlint
+        env:
+          FILES: ${{ inputs.files }}
+        run: |
+          set -euo pipefail
+          # shellcheck disable=SC2086
+          if [ -n "${FILES}" ]; then actionlint ${FILES}; else actionlint; fi

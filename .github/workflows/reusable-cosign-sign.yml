@@ -1,0 +1,96 @@
+# Reusable workflow: cosign keyless blob signing — for the marketplace catalog.
+#
+# The marketplace.json catalog is a plain blob, not a registry package, so it is
+# signed with Sigstore cosign keyless signing: a short-lived Fulcio certificate
+# bound to this workflow's OIDC identity, witnessed in Rekor — no long-lived key
+# to steal (report Pillar 1). Anyone re-verifies with `cosign verify-blob` using
+# the bundle and the workflow's certificate identity. The signing step verifies
+# the bundle back in-run (fail-closed) before exposing it.
+#
+# NOTE: sigstore/cosign-installer is a third-party action and must be on the org
+# Actions allow-list (`sigstore/cosign-installer`) before this reusable runs.
+#
+# Usage:
+#   jobs:
+#     sign-catalog:
+#       permissions:
+#         id-token: write
+#         contents: read
+#       uses: attested-delivery/.github/.github/workflows/reusable-cosign-sign.yml@<sha>
+#       with:
+#         blob-path: .claude-plugin/marketplace.json
+
+name: cosign-sign
+
+on:
+  workflow_call:
+    inputs:
+      blob-path:
+        description: 'Path to the file (blob) to sign'
+        required: true
+        type: string
+      cosign-version:
+        description: 'Pinned cosign release to install'
+        required: false
+        type: string
+        default: 'v3.1.1'
+    outputs:
+      bundle-artifact:
+        description: 'Artifact name holding the cosign bundle'
+        value: cosign-bundle
+      bundle-filename:
+        description: 'cosign bundle filename within the artifact'
+        value: ${{ jobs.cosign-sign.outputs.bundle }}
+      certificate-identity:
+        description: 'Regex matching the keyless signer identity (for verify-blob by consumers)'
+        value: ${{ jobs.cosign-sign.outputs.identity }}
+
+permissions:
+  contents: read
+
+jobs:
+  cosign-sign:
+    name: cosign-sign
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write    # keyless Sigstore (Fulcio/Rekor) signing
+      contents: read
+    outputs:
+      bundle: ${{ steps.sign.outputs.bundle }}
+      identity: ${{ steps.sign.outputs.identity }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Install cosign
+        uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6 # v4.1.2
+        with:
+          cosign-release: ${{ inputs.cosign-version }}
+
+      - name: Sign blob (keyless) + verify back (fail-closed)
+        id: sign
+        env:
+          BLOB: ${{ inputs.blob-path }}
+          SIGNER_IDENTITY_RE: '^https://github\.com/attested-delivery/\.github/\.github/workflows/reusable-cosign-sign\.yml@'
+        run: |
+          set -euo pipefail
+          test -f "${BLOB}" || { echo "::error::blob not found: ${BLOB}"; exit 1; }
+          bundle="$(basename "${BLOB}").cosign.bundle"
+          cosign sign-blob --yes "${BLOB}" --bundle "${bundle}"
+          # Re-verify in-run, fail-closed. Under keyless signing the Fulcio cert
+          # SAN is the SIGNER workflow (this reusable, in attested-delivery/.github),
+          # NOT the caller repo — so match this reusable's identity, at any @ref.
+          cosign verify-blob "${BLOB}" \
+            --bundle "${bundle}" \
+            --certificate-identity-regexp "${SIGNER_IDENTITY_RE}" \
+            --certificate-oidc-issuer "https://token.actions.githubusercontent.com"
+          echo "bundle=${bundle}" >> "$GITHUB_OUTPUT"
+          echo "identity=${SIGNER_IDENTITY_RE}" >> "$GITHUB_OUTPUT"
+          echo "Signed + verified: ${BLOB} -> ${bundle}"
+
+      - name: Upload cosign bundle
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: cosign-bundle
+          path: ${{ steps.sign.outputs.bundle }}
+          if-no-files-found: error

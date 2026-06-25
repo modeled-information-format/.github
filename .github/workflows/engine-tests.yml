@@ -1,0 +1,39 @@
+# Repo-CI gate (not a reusable): lint + unit-test the catalog-updater engine on
+# every change to it, so a regression can't merge unseen. The engine
+# (.github/actions/plugin-catalog-update) is plain-stdlib Python that shells to
+# `gh`; its tests are pure (no network) and run in milliseconds. Pin ruff to a
+# verified version so a new lint rule can't break CI without a deliberate bump.
+name: engine-tests
+
+on:
+  pull_request:
+    paths:
+      - '.github/actions/plugin-catalog-update/**'
+  push:
+    branches: [main]
+    paths:
+      - '.github/actions/plugin-catalog-update/**'
+
+permissions:
+  contents: read
+
+jobs:
+  catalog-update-engine:
+    name: catalog-update-engine
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Lint + unit-test the engine
+        working-directory: .github/actions/plugin-catalog-update
+        env:
+          RUFF_VERSION: 0.14.14
+        run: |
+          set -euo pipefail
+          python3 -m venv "${RUNNER_TEMP}/ruff-venv"
+          "${RUNNER_TEMP}/ruff-venv/bin/pip" install --quiet "ruff==${RUFF_VERSION}"
+          "${RUNNER_TEMP}/ruff-venv/bin/ruff" check catalog_update.py test_catalog_update.py
+          python3 -m unittest test_catalog_update -v
