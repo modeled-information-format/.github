@@ -26,4 +26,4 @@ jobs:
       contents: read
     uses: ./.github/workflows/reusable-zap.yml
     with:
-      target: ${{ inputs.target-url }}
+      target: ${{ inputs['target-url'] }}
