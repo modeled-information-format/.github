@@ -4,7 +4,7 @@ How the `modeled-information-format` org is constituted as a secure,
 attested-workflow org for the **MIF (Modeled Information Format)** specification
 and tooling, and how to operate it. The org reuses the attested-delivery release
 architecture as its CI/release backbone; the MIF spec itself lives at
-<https://mif-spec.dev>.
+<https://mif.dev>.
 
 ## Repositories
 
@@ -15,7 +15,7 @@ architecture as its CI/release backbone; the MIF spec itself lives at
 | `attested-pipeline-template` | Language-agnostic attested release pipeline | template |
 | `rust-template` | Rust attested template (5-platform build, SBOM, gates) | template |
 | `attested-iac-template` | OpenTofu/Terraform attested IaC template (module + per-cloud examples, Checkov gate) | template |
-| `docs-site` | Astro Starlight docs site for the release-architecture ecosystem | distinct from the MIF spec site at mif-spec.dev |
+| `docs-site` | Astro Starlight docs site for the release-architecture ecosystem | distinct from the MIF spec site at mif.dev |
 
 ## Automation identity — GitHub App `modeled-information-format-ci`
 
