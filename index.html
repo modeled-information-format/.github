@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>MIF — Modeled Information Format</title>
+    <meta name="description" content="MIF (Modeled Information Format) is a vendor-neutral data model for portable AI memory: one artifact a person reads and a parser reads, with no translation and no drift." />
+    <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
+    <meta property="og:title" content="MIF — Modeled Information Format" />
+    <meta property="og:description" content="Written once. Read by both." />
+    <meta property="og:type" content="website" />
+    <style>
+      /* MIF brand tokens (.claude/skills/mif-brand). Dark is the default; the brand lives there. */
+      :root {
+        color-scheme: dark;
+        --void: #0a0d13;
+        --base: #0e121b;
+        --elevated: #151b27;
+        --overlay: #1c2433;
+        --border: #2e3a4d;
+        --text: #e8eef6;
+        --text-2: #aebccf;
+        --muted: #7c8aa0;
+        --machine: #34d3e8;
+        --human: #f5b642;
+        --sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        --mono: ui-monospace, "SF Mono", "JetBrains Mono", "Fira Code", Menlo, Consolas, monospace;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        background: radial-gradient(1200px 600px at 50% -10%, #11202b 0%, var(--void) 60%);
+        color: var(--text);
+        font-family: var(--sans);
+        line-height: 1.6;
+        -webkit-font-smoothing: antialiased;
+      }
+      main {
+        max-width: 64rem;
+        margin: 0 auto;
+        padding: 4rem 1.5rem 6rem;
+      }
+      .mark { width: 88px; height: 88px; display: block; margin-bottom: 1.5rem; }
+      h1 {
+        font-family: var(--mono);
+        font-size: clamp(2.5rem, 7vw, 3.8rem);
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        margin: 0;
+      }
+      .name {
+        font-family: var(--mono);
+        color: var(--text-2);
+        letter-spacing: 0.06em;
+        margin: 0.25rem 0 0;
+      }
+      .tagline {
+        font-size: clamp(1.25rem, 3.5vw, 1.7rem);
+        margin: 1.5rem 0 0;
+      }
+      .promise {
+        color: var(--text-2);
+        max-width: 46rem;
+        margin: 1rem 0 0;
+      }
+      .chips { display: flex; flex-wrap: wrap; gap: 0.75rem; margin: 2rem 0 0; }
+      .chip {
+        font-family: var(--mono);
+        font-size: 0.9rem;
+        padding: 0.4rem 0.8rem;
+        border-radius: 9999px;
+        border: 1px solid var(--border);
+        background: var(--elevated);
+      }
+      .chip.human { color: var(--human); }
+      .chip.machine { color: var(--machine); }
+      .chip.neutral { color: var(--text-2); }
+      .cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+        gap: 1rem;
+        margin: 3rem 0 0;
+      }
+      a.card {
+        display: block;
+        text-decoration: none;
+        color: var(--text);
+        background: var(--elevated);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 1.25rem 1.25rem 1.4rem;
+        transition: border-color 0.15s ease, transform 0.15s ease;
+      }
+      a.card:hover { border-color: var(--machine); transform: translateY(-2px); }
+      a.card .k { font-family: var(--mono); font-size: 0.8rem; color: var(--machine); letter-spacing: 0.04em; }
+      a.card h2 { font-size: 1.15rem; margin: 0.4rem 0 0.3rem; }
+      a.card p { color: var(--muted); font-size: 0.92rem; margin: 0; }
+      footer {
+        max-width: 64rem;
+        margin: 0 auto;
+        padding: 0 1.5rem 3rem;
+        color: var(--muted);
+        font-family: var(--mono);
+        font-size: 0.85rem;
+      }
+      footer a { color: var(--text-2); }
+    </style>
+  </head>
+  <body>
+    <main>
+      <!-- Chevron-M mark: machine-cyan + human-amber meeting at one node -->
+      <svg class="mark" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="MIF mark">
+        <rect width="48" height="48" rx="10" fill="#0a0d13" />
+        <g transform="translate(5.28 5.28) scale(0.78)" fill="none" stroke-width="5" stroke-linejoin="round" stroke-linecap="round">
+          <path d="M6 42 L6 6 L24 29" stroke="#34d3e8" />
+          <path d="M24 29 L42 6 L42 42" stroke="#f5b642" />
+          <path d="M24 25 L28 29 L24 33 L20 29 Z" fill="#e8eef6" stroke="none" />
+        </g>
+      </svg>
+
+      <h1>MIF</h1>
+      <p class="name">Modeled Information Format</p>
+
+      <p class="tagline">Written once. Read by both.</p>
+      <p class="promise">
+        MIF is a vendor-neutral data model for portable AI memory. One artifact a
+        person reads and a parser reads &mdash; the same fields, the same meaning,
+        with no translation and no drift between them.
+      </p>
+
+      <div class="chips">
+        <span class="chip human">human-readable</span>
+        <span class="chip machine">machine-parseable</span>
+        <span class="chip neutral">vendor-neutral</span>
+      </div>
+
+      <div class="cards">
+        <a class="card" href="/docs/">
+          <span class="k">docs</span>
+          <h2>Documentation</h2>
+          <p>Tutorials, how-to guides, reference, and the architecture decision records.</p>
+        </a>
+        <a class="card" href="https://mif-spec.dev">
+          <span class="k">spec</span>
+          <h2>Specification</h2>
+          <p>The normative MIF specification &mdash; data model, formats, and conformance.</p>
+        </a>
+        <a class="card" href="https://mif-spec.dev/schema/index.json">
+          <span class="k">schema</span>
+          <h2>Schemas</h2>
+          <p>Canonical JSON Schemas with versioned, immutable release mirrors.</p>
+        </a>
+        <a class="card" href="https://github.com/modeled-information-format/MIF">
+          <span class="k">source</span>
+          <h2>GitHub</h2>
+          <p>The MIF repository, schemas, and tooling on GitHub.</p>
+        </a>
+      </div>
+    </main>
+
+    <footer>
+      modeled-information-format &middot;
+      <a href="https://mif-spec.dev">mif-spec.dev</a> &middot;
+      <a href="/docs/">docs</a>
+    </footer>
+  </body>
+</html>
