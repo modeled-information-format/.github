@@ -91,7 +91,7 @@ attestation. The pattern: a gate uploads its evidence artifact (exposing
 `sarif-artifact` / `sarif-filename` outputs), then the caller invokes
 `reusable-attest-scan.yml` with `subject-name` + `subject-digest` and the gate's
 `predicate-type` (namespace
-`https://modeled-information-format.github.io/attestations/<gate>/v1`). The result is a
+`https://mif.dev/attestations/<gate>/v1`). The result is a
 signed, digest-bound in-toto statement. `reusable-verify-gates.yml` re-verifies a
 set of predicate types for one signer at deploy time, fail-closed.
 

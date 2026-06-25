@@ -19,7 +19,7 @@ its own identity model and governance.
 **AI memory is the first domain profile of MIF, not its identity.** The same
 content model carries any structured, evolving knowledge corpus.
 
-Spec, schemas, and reference docs live at **<https://mif.dev>**.
+Spec, schemas, and reference docs live at **<https://mif-spec.dev>**.
 
 ---
 
@@ -68,7 +68,7 @@ having run. Consumers verify independently with `gh attestation verify`.
 
 ## Getting Started
 
-- Read the specification at **<https://mif.dev>**.
+- Read the specification at **<https://mif-spec.dev>**.
 - Read [`SECURITY.md`](https://github.com/modeled-information-format/.github/blob/main/SECURITY.md) to verify release artifacts.
 - Read [`CONTRIBUTING.md`](https://github.com/modeled-information-format/.github/blob/main/CONTRIBUTING.md) to propose changes.
 - Browse `.github/workflows/` for the reusable quality-gate and signing workflows.

@@ -90,5 +90,5 @@ jobs:
         with:
           subject-name: ${{ inputs.subject-name }}
           subject-digest: ${{ inputs.subject-digest }}
-          predicate-type: https://modeled-information-format.github.io/attestations/k6-load/v1
+          predicate-type: https://mif.dev/attestations/k6-load/v1
           predicate-path: k6-summary.json

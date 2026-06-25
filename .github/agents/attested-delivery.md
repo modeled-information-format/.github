@@ -86,14 +86,14 @@ signer per command:
 # seam-signed gates (SAST, SCA, container/IaC/license, posture, DAST)
 gh attestation verify "$SUBJECT" --owner modeled-information-format \
   --signer-workflow modeled-information-format/.github/.github/workflows/reusable-attest-scan.yml \
-  --predicate-type https://modeled-information-format.github.io/attestations/<gate>/v1
+  --predicate-type https://mif.dev/attestations/<gate>/v1
 
 # self-signed gates pin their own workflow (e.g. reusable-vex.yml → openvex.dev/ns/v0.2.0)
 # container provenance pins sign-and-attest.yml → slsa.dev/provenance/v1
 ```
 
 `--cert-identity-regexp` / `--cert-oidc-issuer` are `cosign` flags — `gh` rejects them.
-Custom predicate namespace: `https://modeled-information-format.github.io/attestations/<gate>/v1`.
+Custom predicate namespace: `https://mif.dev/attestations/<gate>/v1`.
 
 ## How you work
 

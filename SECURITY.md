@@ -95,11 +95,11 @@ SEAM=modeled-information-format/.github/.github/workflows/reusable-attest-scan.y
 
 # Seam-signed gate (SAST shown; swap predicate-type for other SARIF gates)
 gh attestation verify "$SUBJECT" --owner modeled-information-format --signer-workflow "$SEAM" \
-  --predicate-type https://modeled-information-format.github.io/attestations/sast/v1
+  --predicate-type https://mif.dev/attestations/sast/v1
 
 # DAST (ZAP) verdict — seam-signed, same signer workflow
 gh attestation verify "$SUBJECT" --owner modeled-information-format --signer-workflow "$SEAM" \
-  --predicate-type https://modeled-information-format.github.io/attestations/dast/v1
+  --predicate-type https://mif.dev/attestations/dast/v1
 
 # Vulnerability disposition (OpenVEX — self-signed by reusable-vex.yml)
 gh attestation verify "$SUBJECT" --owner modeled-information-format \

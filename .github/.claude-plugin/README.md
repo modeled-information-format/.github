@@ -59,5 +59,5 @@ signing, the attestation seam, fail-closed verify, `pin-check`). For end-to-end
 companion `gh-attested` skill (installed separately, not bundled in this plugin) —
 it defers build-provenance and SBOM attestation to this one.
 
-See the [docs site](https://modeled-information-format.github.io/docs/) for the full
+See the [docs site](https://mif.dev/docs/) for the full
 concepts, ADRs, and promotion-pipeline specifications.
