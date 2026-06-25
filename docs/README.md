@@ -5,8 +5,8 @@ the **DRY principle**, every fact has exactly one home and this hub only *links*
 
 - **Ecosystem-level docs** (attestation/SLSA concepts, the gate map, the promotion
   pipeline, the central reusable workflows, the catalog-updater) live in the
-  **deployed docs site** — Astro Starlight at `mif.dev`, served from this `.github` repo:
-  **<https://mif.dev/docs/>**
+  **deployed docs site** — Astro Starlight at `modeled-information-format.github.io`, served from this `.github` repo:
+  **<https://modeled-information-format.github.io/docs/>**
 - **Per-repo specifics** live in each project repo's own Diátaxis docs, indexed by
   that repo's `docs/README.md`.
 
@@ -14,11 +14,11 @@ the **DRY principle**, every fact has exactly one home and this hub only *links*
 
 | Quadrant | Start here |
 | --- | --- |
-| Ecosystem hub (map) | <https://mif.dev/docs/ecosystem/> |
-| Tutorial | <https://mif.dev/docs/tutorials/verify-your-first-attested-release/> |
-| How-to | <https://mif.dev/docs/guides/onboard-a-repo/> |
-| Reference | <https://mif.dev/docs/reference/quality-gate-workflows/> |
-| Explanation | <https://mif.dev/docs/concepts/> |
+| Ecosystem hub (map) | <https://modeled-information-format.github.io/docs/ecosystem/> |
+| Tutorial | <https://modeled-information-format.github.io/docs/tutorials/verify-your-first-attested-release/> |
+| How-to | <https://modeled-information-format.github.io/docs/guides/onboard-a-repo/> |
+| Reference | <https://modeled-information-format.github.io/docs/reference/quality-gate-workflows/> |
+| Explanation | <https://modeled-information-format.github.io/docs/concepts/> |
 
 ## In-scope project repos (their own Diátaxis docs)
 

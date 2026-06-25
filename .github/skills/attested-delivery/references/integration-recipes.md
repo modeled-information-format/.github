@@ -63,7 +63,7 @@ jobs:
     with:
       subject-name: ghcr.io/<org>/<repo>
       subject-digest: ${{ needs.build.outputs.image-digest }}
-      predicate-type: https://mif.dev/attestations/sast/v1
+      predicate-type: https://modeled-information-format.github.io/attestations/sast/v1
       predicate-artifact: ${{ needs.sast.outputs.sarif-artifact }}
       predicate-filename: ${{ needs.sast.outputs.sarif-filename }}
 ```

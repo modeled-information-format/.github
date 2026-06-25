@@ -27,9 +27,9 @@
 #         owner: modeled-information-format
 #         signer-workflow: modeled-information-format/.github/.github/workflows/reusable-attest-scan.yml
 #         predicate-types: |-
-#           https://mif.dev/attestations/sast/v1
-#           https://mif.dev/attestations/sca/v1
-#           https://mif.dev/attestations/dast/v1
+#           https://modeled-information-format.github.io/attestations/sast/v1
+#           https://modeled-information-format.github.io/attestations/sca/v1
+#           https://modeled-information-format.github.io/attestations/dast/v1
 #     verify-vex:                          # OpenVEX is signed by reusable-vex.yml
 #       permissions:
 #         contents: read

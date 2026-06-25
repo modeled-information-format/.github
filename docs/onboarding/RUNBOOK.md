@@ -15,7 +15,7 @@ architecture as its CI/release backbone; the MIF spec itself lives at
 | `attested-pipeline-template` | Language-agnostic attested release pipeline | template |
 | `rust-template` | Rust attested template (5-platform build, SBOM, gates) | template |
 | `attested-iac-template` | OpenTofu/Terraform attested IaC template (module + per-cloud examples, Checkov gate) | template |
-| doc site (`mif.dev`) | Astro Starlight ecosystem docs — will ultimately reside in this `.github` repo | distinct from the MIF spec site at mif-spec.dev |
+| doc site (`modeled-information-format.github.io`) | Astro Starlight ecosystem docs — will ultimately reside in this `.github` repo | distinct from the MIF spec site at mif-spec.dev |
 
 ## Automation identity — GitHub App `modeled-information-format-ci`
 

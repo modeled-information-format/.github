@@ -16,7 +16,7 @@
 # `report-artifact` / `report-filename` outputs, so the attestation seam
 # (reusable-attest-scan.yml) can sign the DAST verdict bound to a release
 # subject under predicate-type
-# https://mif.dev/attestations/dast/v1.
+# https://modeled-information-format.github.io/attestations/dast/v1.
 #
 # Usage:
 #   jobs:

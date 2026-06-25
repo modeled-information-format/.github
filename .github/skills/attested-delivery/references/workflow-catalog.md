@@ -60,7 +60,7 @@ identity for every SARIF gate; verifiers pin `--signer-workflow` to this file.
 
 - **Inputs (all required):** `subject-name` (logical subject — image repo, package,
   or artifact label); `subject-digest` (`sha256:...` the predicate binds to);
-  `predicate-type` (URI, e.g. `https://mif.dev/attestations/sast/v1`);
+  `predicate-type` (URI, e.g. `https://modeled-information-format.github.io/attestations/sast/v1`);
   `predicate-artifact` (uploaded artifact name holding the evidence);
   `predicate-filename` (evidence filename within the artifact, e.g. `results.sarif`).
 - **Secrets:** none. **Outputs:** none.
@@ -136,7 +136,7 @@ to `sign-and-attest.yml`. Reused by promotion and callable before deploy. Image-
 Each SARIF gate uploads an evidence artifact and exposes `sarif-artifact` /
 `sarif-filename` outputs; the caller wires those into `reusable-attest-scan.yml`
 with the gate's predicate type. Predicate namespace:
-`https://mif.dev/attestations/<gate>/v1`.
+`https://modeled-information-format.github.io/attestations/<gate>/v1`.
 
 ### `${CLAUDE_PLUGIN_ROOT}/workflows/reusable-sast-codeql.yml` — SAST
 CodeQL code scanning → SARIF 2.1.0 into the code-scanning hub.
