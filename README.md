@@ -28,7 +28,7 @@ be added to the **"Allow specified actions and reusable workflows"** box.
 separately.
 
 ```
-anchore/sbom-action@*,modeled-information-format/*,codecov/codecov-action@*,crate-ci/typos@*,dependabot/fetch-metadata@*,docker/*,dtolnay/rust-toolchain@*,gitleaks/gitleaks-action@*,google/osv-scanner-action@*,peter-evans/dockerhub-description@*,rust-lang/crates-io-auth-action@*,softprops/action-gh-release@*,taiki-e/install-action@*
+anchore/sbom-action@*,modeled-information-format/*,codecov/codecov-action@*,crate-ci/typos@*,dependabot/fetch-metadata@*,docker/*,dtolnay/rust-toolchain@*,gitleaks/gitleaks-action@*,google/osv-scanner-action/*,peter-evans/dockerhub-description@*,rust-lang/crates-io-auth-action@*,softprops/action-gh-release@*,taiki-e/install-action@*
 ```
 
 | Pattern | Used by |
@@ -41,7 +41,7 @@ anchore/sbom-action@*,modeled-information-format/*,codecov/codecov-action@*,crat
 | `docker/*` | buildx, login, metadata, setup-qemu, build-push, dockerhub-description (build chain) |
 | `dtolnay/rust-toolchain@*` | Rust toolchain install |
 | `gitleaks/gitleaks-action@*` | secret scanning (needs `GITLEAKS_LICENSE` secret) |
-| `google/osv-scanner-action@*` | SCA (OSV-Scanner action — run inline, not the nested reusable workflow) |
+| `google/osv-scanner-action/*` | SCA (`reusable-sca-osv` runs the `osv-scanner-action` + `osv-reporter-action` **subpath** actions inline; the trailing `/*` is required — `google/osv-scanner-action@*` does not match subpath actions and makes any caller startup-fail) |
 | `peter-evans/dockerhub-description@*` | Docker Hub README sync |
 | `rust-lang/crates-io-auth-action@*` | crates.io Trusted Publishing |
 | `softprops/action-gh-release@*` | GitHub Release creation (rust-template) |
@@ -70,7 +70,7 @@ reaches them will **startup-fail** ("workflow file issue"):
 Complete superset (every third-party action across all org workflows):
 
 ```
-anchore/sbom-action@*,anchore/scan-action@*,aquasecurity/trivy-action@*,aws-actions/amazon-ecr-login@*,aws-actions/configure-aws-credentials@*,codecov/codecov-action@*,crate-ci/typos@*,dependabot/fetch-metadata@*,docker/*,dtolnay/rust-toolchain@*,gitleaks/gitleaks-action@*,google/osv-scanner-action@*,grafana/run-k6-action@*,grafana/setup-k6-action@*,ossf/scorecard-action@*,peter-evans/dockerhub-description@*,rust-lang/crates-io-auth-action@*,sigstore/cosign-installer@*,softprops/action-gh-release@*,taiki-e/install-action@*,zaproxy/action-full-scan@*
+anchore/sbom-action@*,anchore/scan-action@*,aquasecurity/trivy-action@*,aws-actions/amazon-ecr-login@*,aws-actions/configure-aws-credentials@*,codecov/codecov-action@*,crate-ci/typos@*,dependabot/fetch-metadata@*,docker/*,dtolnay/rust-toolchain@*,gitleaks/gitleaks-action@*,google/osv-scanner-action/*,grafana/run-k6-action@*,grafana/setup-k6-action@*,ossf/scorecard-action@*,peter-evans/dockerhub-description@*,rust-lang/crates-io-auth-action@*,sigstore/cosign-installer@*,softprops/action-gh-release@*,taiki-e/install-action@*,zaproxy/action-full-scan@*
 ```
 
 > Regenerate this list after adding/removing actions:
