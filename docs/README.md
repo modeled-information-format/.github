@@ -24,7 +24,7 @@ the **DRY principle**, every fact has exactly one home and this hub only *links*
 
 | Repo | What it is | Its docs |
 | --- | --- | --- |
-| `rust-template` | Production Rust crate template (just recipes, SLSA L3, crates.io trusted publishing) | [docs/README.md](https://github.com/modeled-information-format/rust-template/blob/main/docs/README.md) |
+| `rust-template` | Production Rust crate template (just recipes, SLSA L3, crates.io trusted publishing) | [docs/README.md](https://github.com/zircote/rust-template/blob/main/docs/README.md) |
 | `attested-iac-template` | Copier template for attested OpenTofu/Terraform (Trivy + Checkov gates) | [docs/README.md](https://github.com/modeled-information-format/attested-iac-template/blob/main/docs/README.md) |
 | `attested-pipeline-template` | Language-agnostic attested release pipeline template (Copier) | [docs/README.md](https://github.com/modeled-information-format/attested-pipeline-template/blob/main/docs/README.md) |
 | `claude-code-plugins` | Attested Claude Code plugin marketplace (catalog-admission, fail-closed) | [docs/README.md](https://github.com/modeled-information-format/claude-code-plugins/blob/main/docs/README.md) |
