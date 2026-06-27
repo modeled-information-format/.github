@@ -42,6 +42,40 @@ Spec, schemas, and reference docs live at **<https://mif-spec.dev>**.
 
 ---
 
+## The MIF ecosystem
+
+### Specification
+
+- **[MIF specification](https://mif-spec.dev)** — the normative spec, canonical
+  JSON Schemas, and the `mif_convert` tooling. Source:
+  [`modeled-information-format/MIF`](https://github.com/modeled-information-format/MIF).
+  Ecosystem docs live at
+  [`/docs`](https://modeled-information-format.github.io/docs/) (built from
+  [`modeled-information-format/doc-site`](https://github.com/modeled-information-format/doc-site)).
+
+### Research harness
+
+- **[Research harness](https://modeled-information-format.github.io/research-harness-template/)** —
+  a cloneable, source-grounded research engine whose inputs and outputs are MIF
+  memories, with pluggable research and report packs. Source:
+  [`modeled-information-format/research-harness-template`](https://github.com/modeled-information-format/research-harness-template).
+
+### MIF-enabled tools
+
+- **[Subcog](https://github.com/zircote/subcog)** — an AI memory system that
+  implements MIF. Maintained outside this org at `zircote/subcog`.
+- **[Mnemonic](https://github.com/modeled-information-format/mnemonic)** — a
+  Claude Code plugin that uses MIF ontologies for persistent project memory.
+- **[Structured MADR](https://github.com/modeled-information-format/structured-madr)** —
+  a validator and GitHub Action for Architectural Decision Records in the
+  Structured MADR format, the documentation discipline MIF dogfoods.
+
+> Not every MIF-related project lives in this org. Tools such as **Subcog** are
+> maintained under their authors' accounts (e.g. `zircote/subcog`); link to them
+> at their real home rather than assuming a `modeled-information-format/*` path.
+
+---
+
 ## How releases here are delivered
 
 The MIF org ships its specifications, schemas, and tooling through a
