@@ -51,10 +51,15 @@ runs:
       shell: bash
       env:
         GH_TOKEN: ${{ inputs.github-token }}
+        # Pass inputs via env, never interpolated into the run script, so
+        # attacker-controlled values cannot inject shell code (Semgrep
+        # run-shell-injection). The script reads them as quoted argv.
+        MODE: ${{ inputs.mode }}
+        REPO: ${{ inputs.repo }}
+        MARKETPLACE_PATH: ${{ inputs.marketplace-path }}
+        PREDICATE_TYPES: ${{ inputs.predicate-types }}
+        DRY_RUN: ${{ inputs.dry-run }}
       run: |
-        python3 "${GITHUB_ACTION_PATH}/catalog_update.py" \
-          --mode "${{ inputs.mode }}" \
-          --repo "${{ inputs.repo }}" \
-          --marketplace "${{ inputs.marketplace-path }}" \
-          --predicates "${{ inputs.predicate-types }}" \
-          ${{ inputs.dry-run == 'true' && '--dry-run' || '' }}
+        args=(--mode "$MODE" --repo "$REPO" --marketplace "$MARKETPLACE_PATH" --predicates "$PREDICATE_TYPES")
+        if [ "$DRY_RUN" = "true" ]; then args+=(--dry-run); fi
+        python3 "${GITHUB_ACTION_PATH}/catalog_update.py" "${args[@]}"
