@@ -34,7 +34,7 @@ body:
       description: Current branch and ancestry state, plus the deploy and release triggers.
       value: |
         - Branch and ancestry: how the integration branch relates to `main` (note any squash or divergence, and the file delta).
-        - `deploy.yml` deploys the site on push to `main`. `release.yml` is the attested pipeline (SLSA provenance + CycloneDX SBOM, keyless Sigstore, fail-closed verify) on tag, release, or dispatch.
+        - Deploy + release triggers: which workflow deploys the site on push to `main`, and which workflow runs the attested release pipeline (SLSA provenance + CycloneDX SBOM, keyless Sigstore, fail-closed verify) on tag/release/dispatch.
     validations:
       required: true
 
@@ -88,8 +88,8 @@ body:
       label: "Phase 3: Deploy and attested release (outward-facing)"
       value: |
         - Push to `main` deploys the site. Verify the live site, the served schema mirror, and a clean `llms.txt`.
-        - Apply the status flip (promote `CHANGELOG`, set Release). Tag the version and create the GitHub Release, which runs `release.yml` to attest.
-        - Verify independently: `gh attestation verify <artifact> --repo <org>/<repo> --signer-workflow <org>/<repo>/.github/workflows/release.yml`.
+        - Apply the status flip (promote `CHANGELOG`, set Release). Tag the version and create the GitHub Release to trigger the repo’s attested release workflow.
+        - Verify independently: `gh attestation verify <artifact> --repo <org>/<repo> --signer-workflow <org>/<repo>/.github/workflows/release.yml` (adjust the workflow path if your repo uses a different filename).
     validations:
       required: false
 
