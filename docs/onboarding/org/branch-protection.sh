@@ -12,7 +12,7 @@
 # Idempotent: a declarative PUT of desired state. Re-running is safe.
 #
 # Usage:
-#   bash branch-protection.sh <owner/repo> [branch] [required-check-context ...]
+#   bash branch-protection.sh <owner/repo> <branch> [required-check-context ...]
 #   # Discover a repo's always-on PR contexts (paste them as args):
 #   #   gh api "/repos/<owner/repo>/commits/<a-recent-PR-head-sha>/check-runs" \
 #   #     --jq '.check_runs[] | select(.conclusion!="skipped") | .name' | sort -u
@@ -30,9 +30,9 @@
 #     "Validate Ontology Files" "Build Docs Site (Astro)"
 set -euo pipefail
 
-REPO="${1:?usage: branch-protection.sh <owner/repo> [branch] [context ...]}"
-BRANCH="${2:-main}"
-if [ "$#" -ge 2 ]; then shift 2; else shift 1; fi
+REPO="${1:?usage: branch-protection.sh <owner/repo> <branch> [context ...]}"
+BRANCH="${2:?usage: branch-protection.sh <owner/repo> <branch> [context ...]}"
+shift 2
 CONTEXTS=("$@")
 
 # Build the required-status-checks contexts JSON array from the args.
