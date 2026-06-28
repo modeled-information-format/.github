@@ -1,0 +1,22 @@
+# Apply the org-centralized labels (labels.yml) to THIS repo via the reusable
+# workflow, and serve as the worked example other org repos copy (overriding
+# local-labels with their own .github/labels.yml).
+name: Sync labels
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - labels.yml
+      - .github/workflows/label-sync.yml
+      - .github/workflows/reusable-label-sync.yml
+  schedule:
+    - cron: '0 6 * * 1'   # weekly drift correction
+  workflow_dispatch: {}
+
+jobs:
+  labels:
+    permissions:
+      contents: read
+      issues: write
+    uses: ./.github/workflows/reusable-label-sync.yml
