@@ -8,7 +8,8 @@ any `modeled-information-format` repo on the attested-delivery architecture.
 Mechanics it builds on (do not duplicate them here):
 
 - Attested build/sign/verify: the `attested-delivery` skill references
-  (`references/rollout-checklist.md`, `references/verification.md`) and the repo's
+  (`/.github/skills/attested-delivery/references/rollout-checklist.md`,
+  `/.github/skills/attested-delivery/references/verification.md`) and the consuming repo’s
   `release.yml`.
 - Architecture rationale: the consuming repo's release ADR (e.g. MIF ADR-015).
 
@@ -61,13 +62,13 @@ Convert the punch list into trackable work.
 
 1. Group findings into **epics** sized as one reviewable PR each. Every finding maps
    to exactly one epic; by-design fixtures and clean files are excluded.
-2. Create one GitHub **issue per epic**, labeled `epic` + `documentation`/`type/*` +
+2. Create one GitHub **issue per epic**, labeled `epic` + `type/*` + `area/*` +
    `priority/*`.
 3. Create each subtask as a **real GitHub sub-issue** linked to its epic
    (`POST /repos/{o}/{r}/issues/{epic}/sub_issues {sub_issue_id}`), labeled
    `subtask` + the same area/priority labels. A markdown checkbox list is NOT a
    subtask; do not substitute one. Create the `epic`/`subtask` labels if missing.
-4. Maintainer **decisions** become their own sub-issues flagged `question`.
+4. Maintainer **decisions** become their own sub-issues flagged `type/question`.
 5. Mechanical, cross-cutting cleanups that touch every file (e.g. a style sweep) may
    run un-ticketed as a final pass; note this on the relevant epic so it is not lost.
 
@@ -117,8 +118,12 @@ Work the epics under GitHub Flow.
 4. **Tag + release**: apply the status flip (promote CHANGELOG, set Release), tag the
    version, create the GitHub Release -> `release.yml` runs the attested pipeline
    (SLSA provenance + SBOM, keyless Sigstore, fail-closed verify).
-5. **Verify independently**: `gh attestation verify <artifact> --repo <o>/<r>
-   --signer-workflow <o>/<r>/.github/workflows/release.yml` from a clean checkout.
+5. **Verify independently** from a clean checkout:
+
+   ```sh
+   gh attestation verify <artifact> --repo <o>/<r> \
+     --signer-workflow <o>/<r>/.github/workflows/release.yml
+   ```
 6. **Prune branches**: GitHub Flow branches are already deleted on merge. For the
    integration-branch exception, delete the integration branch once the release is
    published and verified. There is no back-merge; `main` is the trunk.
