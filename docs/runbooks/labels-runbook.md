@@ -15,12 +15,10 @@ Mechanics it builds on (do not duplicate here):
   repo on push to `labels.yml`, weekly (drift correction), and on demand. It is
   the worked example other repos copy.
 
-## Taxonomy (23 labels, 5 groups)
+## Taxonomy (25 labels)
 
-Every label is `group: value`, lowercase, with a fixed color per group so the
-board reads at a glance. The **central** set is exactly these five groups — no
-ungrouped labels. Repo-specific labels do not belong here; they go in that repo's
-overlay under their own group (see *Repo-local additions*).
+Grouped labels are `group: value`, lowercase, with a fixed color per group so the
+board reads at a glance. Five grouped families plus two central automation labels.
 
 | Group | Values | Use |
 | --- | --- | --- |
@@ -29,9 +27,12 @@ overlay under their own group (see *Repo-local additions*).
 | `status` | needs-triage, in-progress, blocked, ready-for-review, approved | Where it is in flow. |
 | `area` | ci-cd, dependencies, testing, infrastructure | Subsystem touched. |
 | `effort` | small, medium, large | Rough size. |
+| (automation) | `report`, `automated` | Central labels applied by automated workflows (e.g. automated security reports). |
 
-Exact names, colors, and descriptions are authoritative in `labels.yml` — this
-table is a map, not the source.
+Repo-specific labels are **not** central — they live in that repo's overlay under
+their own namespace (see *Repo-local additions*). Exact names, colors, and
+descriptions are authoritative in `labels.yml` — this table is a map, not the
+source.
 
 ## Apply to a repo (consistently)
 
@@ -58,11 +59,11 @@ jobs:
 - **Org set only**: omit `.github/labels.yml` in the caller (missing file = org
   set only).
 - **Repo-local additions**: add a `.github/labels.yml` in the caller; it is merged
-  *over* the org set (caller wins on name collisions). Keep the same
-  `group: value` convention with a group name scoped to that repo. Worked
-  example — `research-harness-template/.github/labels.yml` adds a `research:`
-  group (`research: report`, `research: automated`) that exists only on that
-  repo; those labels are **not** part of the central set.
+  *over* the org set (caller wins on name collisions). Use a namespace scoped to
+  that repo. Worked example — `research-harness-template` defines a `research/*`
+  namespace for its research-loop stages (`research/goal`, `research/hypothesis`,
+  `research/augment`, `research/falsify`, `research/synthesize`); those labels
+  exist only on that repo and are **not** part of the central set.
 - **Preview**: run with `dry-run: true` (or `workflow_dispatch`) before applying.
 
 ## Change the standard
@@ -80,6 +81,6 @@ jobs:
 - `group: value`, lowercase; keep one color per group (see `labels.yml`).
 - Prefer reusing an existing label over inventing one; propose new labels by
   editing `labels.yml`, not by adding them ad hoc in a single repo.
-- Repo-specific labels (e.g. machine-managed `research: report` in
-  research-harness-template) live in that repo's overlay under their own group,
-  never in the central `labels.yml`.
+- Repo-specific labels (e.g. the `research/*` research-loop stages in
+  research-harness-template) live in that repo's overlay under their own
+  namespace, never in the central `labels.yml`.
