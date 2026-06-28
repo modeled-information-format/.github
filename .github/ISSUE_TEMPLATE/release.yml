@@ -1,7 +1,7 @@
 name: Release
 description: Track a versioned, audit-gated attested release cutover
 title: "release(vX.Y.Z): cut over <integration-branch> to main"
-labels: ["epic", "area/ci"]
+labels: ["epic", "area/ci", "priority/high"]
 body:
   - type: markdown
     attributes:
