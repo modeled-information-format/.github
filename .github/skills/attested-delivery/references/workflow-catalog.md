@@ -53,6 +53,19 @@ checksum-verified).
 - **Predicate:** none (lint gate).
 - **Allow-list:** none beyond `actions/checkout`.
 
+### `${CLAUDE_PLUGIN_ROOT}/workflows/reusable-label-sync.yml`
+Apply the org-centralized labels (`labels.yml`) merged with a caller repo's
+optional local labels to the calling repository, via `github-label-sync`.
+
+- **Inputs:** `local-labels` (string, default `.github/labels.yml` -> merged over
+  the org set; missing file = org set only); `dry-run` (boolean, default `false`).
+- **Secrets:** none. **Outputs:** none.
+- **Permissions:** `contents: read`, `issues: write`.
+- **Job:** `sync` / name `label-sync`.
+- **Predicate:** none (label management).
+- **Allow-list:** none beyond `actions/checkout` (`github-label-sync` is an npm
+  CLI via `npx`, pinned `3.0.0`, not a `uses:` action).
+
 ### `${CLAUDE_PLUGIN_ROOT}/workflows/reusable-attest-scan.yml` — the attestation seam
 Turn any gate's evidence file into a signed, digest-bound in-toto attestation via
 GitHub keyless signing (`actions/attest`, custom predicate). This is the signer
