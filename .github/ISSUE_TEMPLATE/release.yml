@@ -1,0 +1,114 @@
+name: Release
+description: Track a versioned, audit-gated attested release cutover
+title: "release(vX.Y.Z): cut over <integration-branch> to main"
+labels: ["epic", "area/ci"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Tracking issue for a versioned release cutover. Follow the release runbook:
+        https://github.com/modeled-information-format/.github/blob/main/docs/runbooks/release-runbook.md
+
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: The release version to cut.
+      placeholder: v1.0.0
+    validations:
+      required: true
+
+  - type: input
+    id: integration-branch
+    attributes:
+      label: Integration branch
+      description: The branch being cut over to main. Leave blank when releasing directly from main under GitHub Flow (the default).
+      placeholder: develop/v1.0.0
+    validations:
+      required: false
+
+  - type: textarea
+    id: state
+    attributes:
+      label: State
+      description: Current branch and ancestry state, plus the deploy and release triggers.
+      value: |
+        - Branch and ancestry: how the integration branch relates to `main` (note any squash or divergence, and the file delta).
+        - `deploy.yml` deploys the site on push to `main`. `release.yml` is the attested pipeline (SLSA provenance + CycloneDX SBOM, keyless Sigstore, fail-closed verify) on tag, release, or dispatch.
+    validations:
+      required: true
+
+  - type: textarea
+    id: decisions
+    attributes:
+      label: Decisions
+      description: Elicited, fixed decisions that gate the cutover.
+      value: |
+        - **D0 (gating):** what must land before cutover (for example, remediate all doc epics so the published site does not ship examples that fail their own schema).
+        - **D1 (release status):** for example, Release Candidate until tag; flip to Release and promote `CHANGELOG.md` `[Unreleased]` to `[1.0.0]` only at tag time.
+        - **D2 (branch lifecycle):** for example, the integration branch is ephemeral, pruned after publish; there is no back-merge; future work branches off `main`.
+    validations:
+      required: true
+
+  - type: textarea
+    id: prerequisites
+    attributes:
+      label: Prerequisites
+      description: Issues or epics that must close before cutover (per D0).
+      value: |
+        - [ ] #<epic>
+        - [ ] #<epic>
+        - [ ] Final style sweep, if any
+    validations:
+      required: false
+
+  - type: textarea
+    id: phase1
+    attributes:
+      label: "Phase 1: Pre-merge prep"
+      value: |
+        - Apply the release-status decision; confirm `VERSION.json` matches the version.
+        - Confirm required checks are green; the build emits the schema mirror and a clean `llms.txt`.
+    validations:
+      required: false
+
+  - type: textarea
+    id: phase2
+    attributes:
+      label: "Phase 2: Reach the release state on main"
+      value: |
+        - Under GitHub Flow the epic PRs have already merged to `main`; if an integration branch was used, merge it to `main` via PR with a merge commit (never squash or rebase for the cutover) to preserve history, resolving conflicts in favor of the integration branch.
+        - Required status checks must pass on the PR.
+    validations:
+      required: false
+
+  - type: textarea
+    id: phase3
+    attributes:
+      label: "Phase 3: Deploy and attested release (outward-facing)"
+      value: |
+        - Push to `main` deploys the site. Verify the live site, the served schema mirror, and a clean `llms.txt`.
+        - Apply the status flip (promote `CHANGELOG`, set Release). Tag the version and create the GitHub Release, which runs `release.yml` to attest.
+        - Verify independently: `gh attestation verify <artifact> --repo <org>/<repo> --signer-workflow <org>/<repo>/.github/workflows/release.yml`.
+    validations:
+      required: false
+
+  - type: textarea
+    id: phase4
+    attributes:
+      label: "Phase 4: Prune (branch lifecycle)"
+      value: |
+        - Release and integration branches are ephemeral; there is no back-merge.
+        - Once the release is published and verified, delete the integration branch. Future work branches off `main`.
+    validations:
+      required: false
+
+  - type: textarea
+    id: rollback
+    attributes:
+      label: Rollback
+      value: |
+        - Site: revert the cutover merge on `main` (re-deploys the prior state).
+        - Release: fail-closed verify blocks a bad artifact; if a tag is wrong, delete the tag and release, then re-cut.
+    validations:
+      required: false
