@@ -32,7 +32,7 @@ on:
     secrets:
       app-private-key:
         description: >-
-          Private key of the org CI GitHub App (its App id is in
+          Private key of the org CI GitHub App (its Client ID is in
           vars.MIF_CI_CLIENT_APP_ID). When provided, Scorecard reads branch
           protection via an App installation token (administration:read), so the
           Branch-Protection check is scored from real settings rather than the
@@ -69,11 +69,7 @@ jobs:
       # protection (administration:read) — the default GITHUB_TOKEN cannot, which
       # caps the Branch-Protection check. Best-effort: if the App is not
       # configured for this caller, fall back to GITHUB_TOKEN below.
-      - name: Mint CI App token (Branch-Protection read)
-        id: app-token
-        if: ${{ vars.MIF_CI_CLIENT_APP_ID != '' }}
-        continue-on-error: true
-        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        if: ${{ vars.MIF_CI_CLIENT_APP_ID != '' && secrets.app-private-key != '' }}
         with:
           client-id: ${{ vars.MIF_CI_CLIENT_APP_ID }}
           private-key: ${{ secrets.app-private-key }}
