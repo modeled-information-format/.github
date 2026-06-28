@@ -29,6 +29,16 @@ on:
         required: false
         type: boolean
         default: true
+    secrets:
+      app-private-key:
+        description: >-
+          Private key of the org CI GitHub App (its Client ID is in
+          vars.MIF_CI_CLIENT_APP_ID). When provided, Scorecard reads branch
+          protection via an App installation token (administration:read), so the
+          Branch-Protection check is scored from real settings rather than the
+          incomplete data the default GITHUB_TOKEN can see. Omit to fall back to
+          GITHUB_TOKEN (Branch-Protection then limited).
+        required: false
     outputs:
       sarif-artifact:
         description: 'Artifact name holding the SARIF evidence (attestation seam)'
@@ -55,12 +65,30 @@ jobs:
         with:
           persist-credentials: false
 
+      # Mint an org CI App installation token so Scorecard can read branch
+      # protection (administration:read) — the default GITHUB_TOKEN cannot, which
+      # caps the Branch-Protection check. Gated on the App-id var (secrets cannot
+      # be used in `if:`); fails soft via continue-on-error when no private key is
+      # passed, and repo_token below falls back to GITHUB_TOKEN.
+      - name: Mint CI App token (Branch-Protection read)
+        id: app-token
+        if: ${{ vars.MIF_CI_CLIENT_APP_ID != '' }}
+        continue-on-error: true
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          client-id: ${{ vars.MIF_CI_CLIENT_APP_ID }}
+          private-key: ${{ secrets.app-private-key }}
+          owner: ${{ github.repository_owner }}
+          repositories: ${{ github.event.repository.name }}
+
       - name: Run OpenSSF Scorecard
         uses: ossf/scorecard-action@4eaacf0543bb3f2c246792bd56e8cdeffafb205a # v2.4.3
         with:
           results_file: scorecard.sarif
           results_format: sarif
           publish_results: ${{ inputs.publish-results }}
+          # App token when available (full Branch-Protection read), else GITHUB_TOKEN.
+          repo_token: ${{ steps.app-token.outputs.token || github.token }}
 
       - name: Upload Scorecard SARIF
         uses: github/codeql-action/upload-sarif@8aad20d150bbac5944a9f9d289da16a4b0d87c1e # v4.36.2
