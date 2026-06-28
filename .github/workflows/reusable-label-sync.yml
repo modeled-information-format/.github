@@ -51,7 +51,10 @@ jobs:
           LOCAL_LABELS: ${{ inputs.local-labels }}
         run: |
           set -euo pipefail
-          curl -fsSL "https://raw.githubusercontent.com/modeled-information-format/.github/HEAD/labels.yml" -o /tmp/org-labels.yml
+          curl -fsSL "https://raw.githubusercontent.com/modeled-information-format/.github/${{ github.job_workflow_sha }}/labels.yml" -o /tmp/org-labels.yml
+          # PyYAML is not stdlib; install a pinned version only when the runner lacks it
+          python3 -c 'import yaml' 2>/dev/null || \
+            python3 -m pip install --quiet --disable-pip-version-check 'pyyaml==6.0.2'
           python3 - <<'PY'
           import yaml, os
           merged = {}
