@@ -1,0 +1,77 @@
+# Reusable workflow: label-sync — apply the org-centralized label set (this repo's
+# root labels.yml, the github-label-sync source of truth) merged with a caller
+# repo's optional local labels, to the CALLING repository.
+#
+# The org standard tool is github-label-sync (see labels.yml header). It runs here
+# in CI, pinned to a fixed npm version. No allow-listed third-party ACTION is
+# needed: github-label-sync is an npm CLI invoked via npx, not a `uses:` action,
+# and the only action used is the GitHub-owned actions/checkout.
+#
+# Authoritative: the caller's labels are made to match (org + local) exactly.
+# Repo-specific labels live in the caller's .github/labels.yml.
+#
+# Usage:
+#   jobs:
+#     labels:
+#       permissions:
+#         contents: read
+#         issues: write
+#       uses: modeled-information-format/.github/.github/workflows/reusable-label-sync.yml@<sha>
+#       with:
+#         local-labels: .github/labels.yml   # optional; merged over the org set
+#         dry-run: false                      # optional; preview only
+
+name: label-sync
+
+on:
+  workflow_call:
+    inputs:
+      local-labels:
+        description: 'Path in the caller repo to repo-local labels, merged over the org set. Missing file = org set only.'
+        required: false
+        type: string
+        default: '.github/labels.yml'
+      dry-run:
+        description: 'Preview the changes without applying them'
+        required: false
+        type: boolean
+        default: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - name: Checkout caller repo (for the local label overlay)
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
+      - name: Merge org-centralized + repo-local labels
+        env:
+          LOCAL_LABELS: ${{ inputs.local-labels }}
+        run: |
+          set -euo pipefail
+          curl -fsSL "https://raw.githubusercontent.com/modeled-information-format/.github/HEAD/labels.yml" -o /tmp/org-labels.yml
+          python3 - <<'PY'
+          import yaml, os
+          merged = {}
+          for path in ("/tmp/org-labels.yml", os.environ["LOCAL_LABELS"]):
+              try:
+                  data = yaml.safe_load(open(path)) or []
+              except FileNotFoundError:
+                  data = []
+              for label in data:
+                  merged[label["name"]] = label   # repo-local overrides org by name
+          yaml.safe_dump(list(merged.values()), open("/tmp/labels.yml", "w"),
+                         sort_keys=False, allow_unicode=True)
+          print(f"merged {len(merged)} labels")
+          PY
+      - name: Apply labels (github-label-sync, authoritative)
+        env:
+          GH_TOKEN: ${{ github.token }}
+          DRY_RUN: ${{ inputs.dry-run }}
+        run: |
+          set -euo pipefail
+          args=(--access-token "$GH_TOKEN" --labels /tmp/labels.yml)
+          if [ "$DRY_RUN" = "true" ]; then args+=(--dry-run); fi
+          npx --yes github-label-sync@3.0.0 "${args[@]}" "$GITHUB_REPOSITORY"
