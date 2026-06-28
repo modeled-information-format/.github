@@ -33,3 +33,9 @@ the **DRY principle**, every fact has exactly one home and this hub only *links*
 
 - [`onboarding/RUNBOOK.md`](./onboarding/RUNBOOK.md) — how the org was constituted and is operated.
 - [`../catalog-update/README.md`](../catalog-update/README.md) — the attested plugin catalog-updater.
+
+### Runbooks (`docs/runbooks/`)
+
+- [`release-runbook.md`](./runbooks/release-runbook.md) — audit-gated attested release process.
+- [`branch-protection-runbook.md`](./runbooks/branch-protection-runbook.md) — consistent default-branch gates + maximum required PR checks (apply: `onboarding/org/branch-protection.sh`).
+- [`labels-runbook.md`](./runbooks/labels-runbook.md) — org-centralized issue/PR labels (source: `labels.yml`, synced via `reusable-label-sync.yml`).
