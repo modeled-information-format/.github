@@ -1,3 +1,13 @@
+---
+id: 3a3e45ea-0f67-4c46-9074-ae25c2fceccf
+type: procedural
+created: 2026-06-28T12:14:29-04:00
+namespace: _procedural/runbooks
+title: "Labels Runbook"
+tags:
+  - runbook
+---
+
 # Labels Runbook — Org-Centralized Issue/PR Labels
 
 This runbook defines the **org-standard label set** and how it is kept consistent

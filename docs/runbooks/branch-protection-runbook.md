@@ -1,3 +1,13 @@
+---
+id: 150f2462-de71-4290-867e-db3e2ebe96b7
+type: procedural
+created: 2026-06-28T12:14:29-04:00
+namespace: _procedural/runbooks
+title: "Branch Protection Runbook"
+tags:
+  - runbook
+---
+
 # Branch Protection Runbook — Consistent Default-Branch Gates
 
 This runbook defines the **org-standard branch protection** every

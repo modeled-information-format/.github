@@ -1,3 +1,13 @@
+---
+id: 51e27ded-e4fc-41e7-9084-0c05b013bf34
+type: procedural
+created: 2026-06-27T23:03:08-04:00
+namespace: _procedural/runbooks
+title: "Release Runbook"
+tags:
+  - runbook
+---
+
 # Release Runbook — Audit-Gated Attested Release
 
 This runbook governs how an org repo goes from "feature-complete" to a published,
