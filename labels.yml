@@ -61,6 +61,10 @@
   color: "5319E7"
   description: "Performance improvements or optimizations"
 
+- name: "type: epic"
+  color: "6E40C9"
+  description: "Large body of work spanning multiple related issues or PRs"
+
 # =============================================================================
 # STATUS LABELS
 # Track the current state of work
