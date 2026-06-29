@@ -62,7 +62,7 @@ jobs:
           python3 -c 'import yaml' 2>/dev/null || \
             python3 -m pip install --quiet --disable-pip-version-check 'pyyaml==6.0.2'
           python3 - <<'PY'
-          import yaml, os
+          import yaml, os, json
           merged = {}
           for path in ("/tmp/org-labels.yml", os.environ["LOCAL_LABELS"]):
               try:
@@ -71,8 +71,13 @@ jobs:
                   data = []
               for label in data:
                   merged[label["name"]] = label   # repo-local overrides org by name
-          yaml.safe_dump(list(merged.values()), open("/tmp/labels.yml", "w"),
-                         sort_keys=False, allow_unicode=True)
+          # Emit JSON (a strict subset of YAML) rather than YAML. A hex color such as
+          # "5319E7" is a valid github-label-sync color, but written bare it parses as a
+          # float (5319e7 = 53190000000) under js-yaml, which github-label-sync uses —
+          # and PyYAML's safe_dump does NOT quote it. JSON quotes every scalar, so colors
+          # stay strings. github-label-sync reads /tmp/labels.yml via js-yaml, which
+          # accepts JSON, so the downstream apply step is unchanged.
+          json.dump(list(merged.values()), open("/tmp/labels.yml", "w"), ensure_ascii=False)
           print(f"merged {len(merged)} labels")
           PY
       - name: Apply labels (github-label-sync, authoritative)
