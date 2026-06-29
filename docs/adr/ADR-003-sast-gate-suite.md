@@ -29,6 +29,7 @@ related:
   - ADR-002-reusable-quality-gate-architecture.md
   - ADR-004-supply-chain-scanning.md
   - ADR-005-signing-attestation-verification.md
+  - ADR-006-dast-and-load-testing.md
 ---
 
 # ADR-003: SAST Gate Suite (CodeQL + Semgrep + ShellCheck)

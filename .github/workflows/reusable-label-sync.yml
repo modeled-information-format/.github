@@ -66,7 +66,7 @@ jobs:
           merged = {}
           for path in ("/tmp/org-labels.yml", os.environ["LOCAL_LABELS"]):
               try:
-                  data = yaml.safe_load(open(path)) or []
+                  data = yaml.safe_load(open(path, encoding="utf-8")) or []
               except FileNotFoundError:
                   data = []
               for label in data:
@@ -77,7 +77,7 @@ jobs:
           # and PyYAML's safe_dump does NOT quote it. JSON quotes every scalar, so colors
           # stay strings. github-label-sync reads /tmp/labels.yml via js-yaml, which
           # accepts JSON, so the downstream apply step is unchanged.
-          json.dump(list(merged.values()), open("/tmp/labels.yml", "w"), ensure_ascii=False)
+          json.dump(list(merged.values()), open("/tmp/labels.yml", "w", encoding="utf-8"), ensure_ascii=False)
           print(f"merged {len(merged)} labels")
           PY
       - name: Apply labels (github-label-sync, authoritative)
