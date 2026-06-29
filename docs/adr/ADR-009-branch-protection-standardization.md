@@ -412,5 +412,3 @@ default branch and directly drives the OpenSSF Scorecard `Branch-Protection` and
 `SAST` checks. It is the per-repo complement to the org-level `harden.sh`.
 
 **Action Required:** None.
-</content>
-</invoke>

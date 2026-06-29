@@ -362,5 +362,3 @@ signs `k6-summary.json` under a custom performance predicate type. The in-repo
 `target`, so `fail-action` defaults to `true`. No k6 caller ships in this repo.
 
 **Action Required:** None.
-</content>
-</invoke>
