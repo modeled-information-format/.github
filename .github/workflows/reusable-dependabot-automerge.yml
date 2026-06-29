@@ -1,0 +1,79 @@
+---
+name: Reusable / Dependabot auto-merge
+
+# Approve + enable auto-merge for Dependabot PRs whose semver update type is in the
+# allowed set (default: patch only; minor/major stay manual). Dependabot cannot
+# approve its own PR, so the required review is satisfied by the org CI App (its
+# Client ID is in vars.MIF_CI_CLIENT_APP_ID; pass its private key as the
+# app-private-key secret).
+#
+# Callers MUST trigger on `pull_request_target` — Dependabot's own `pull_request`
+# runs get a read-only token with NO secrets, so the App key is unreachable there.
+# This job never checks out or executes PR head code; it only reads metadata and
+# calls `gh`, so running in the privileged `pull_request_target` context is safe.
+
+on:
+  workflow_call:
+    inputs:
+      update-types:
+        description: 'Space/comma list of semver update types to auto-merge: patch, minor, major.'
+        required: false
+        type: string
+        default: 'patch'
+      merge-method:
+        description: 'Merge method: squash | merge | rebase.'
+        required: false
+        type: string
+        default: 'squash'
+    secrets:
+      app-private-key:
+        description: >-
+          Private key of the org CI GitHub App (its Client ID is in
+          vars.MIF_CI_CLIENT_APP_ID). Used to approve the PR as a non-Dependabot
+          identity so the required review is satisfied.
+        required: true
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  automerge:
+    name: Approve + auto-merge (allowed update types)
+    if: ${{ github.actor == 'dependabot[bot]' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fetch Dependabot metadata
+        id: meta
+        uses: dependabot/fetch-metadata@25dd0e34f4fe68f24cc83900b1fe3fe149efef98 # v3.1.0
+
+      - name: Mint org App token (approval identity; Dependabot can't approve itself)
+        id: app
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          client-id: ${{ vars.MIF_CI_CLIENT_APP_ID }}
+          private-key: ${{ secrets.app-private-key }}
+
+      - name: Approve and enable auto-merge for allowed update types
+        env:
+          GH_TOKEN: ${{ steps.app.outputs.token }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          UPDATE_TYPE: ${{ steps.meta.outputs.update-type }}
+          ALLOWED: ${{ inputs.update-types }}
+          MERGE_METHOD: ${{ inputs.merge-method }}
+        run: |
+          set -euo pipefail
+          case "$UPDATE_TYPE" in
+            version-update:semver-patch) word="patch" ;;
+            version-update:semver-minor) word="minor" ;;
+            version-update:semver-major) word="major" ;;
+            *) word="unknown" ;;
+          esac
+          allowed=" ${ALLOWED//,/ } "
+          if [[ "$allowed" != *" $word "* ]]; then
+            echo "Update type '$word' ($UPDATE_TYPE) not in allowed set '$ALLOWED' — leaving for manual merge."
+            exit 0
+          fi
+          echo "Allowed $word update — approving and enabling --auto ($MERGE_METHOD): $PR_URL"
+          gh pr review --approve "$PR_URL"
+          gh pr merge --auto --"$MERGE_METHOD" "$PR_URL"
