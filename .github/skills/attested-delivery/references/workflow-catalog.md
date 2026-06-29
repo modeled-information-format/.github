@@ -1,4 +1,4 @@
-# Workflow catalog — the 19 central reusable workflows
+# Workflow catalog — the 20 central reusable workflows
 
 This is the deliberate, named index of every reusable workflow the
 attested-delivery plugin ships. Each is a **bundled plugin resource**: it lives
@@ -65,6 +65,21 @@ optional local labels to the calling repository, via `github-label-sync`.
 - **Predicate:** none (label management).
 - **Allow-list:** none beyond `actions/checkout` (`github-label-sync` is an npm
   CLI via `npx`, pinned `3.0.0`, not a `uses:` action).
+
+### `${CLAUDE_PLUGIN_ROOT}/workflows/reusable-dependabot-automerge.yml` — Dependabot auto-merge
+Approve + enable auto-merge for Dependabot PRs whose semver update type is in the
+allowed set (patch only by default; minor/major stay manual). Approval comes from
+the org CI App because Dependabot cannot approve its own PR.
+
+- **Inputs:** `update-types` (string, default `patch`); `merge-method` (string,
+  default `squash`).
+- **Secrets:** `app-private-key` (required) — org CI App private key (its Client ID
+  is in `vars.MIF_CI_CLIENT_APP_ID`). **Outputs:** none.
+- **Permissions:** `contents: read`, `pull-requests: read` (writes use the minted
+  App token, not `GITHUB_TOKEN`).
+- **Trigger:** callers MUST use `pull_request_target` (Dependabot's `pull_request`
+  runs have no secrets); the job never checks out PR head code.
+- **Allow-list:** `dependabot/fetch-metadata@*` (already listed); `actions/create-github-app-token`.
 
 ### `${CLAUDE_PLUGIN_ROOT}/workflows/reusable-attest-scan.yml` — the attestation seam
 Turn any gate's evidence file into a signed, digest-bound in-toto attestation via

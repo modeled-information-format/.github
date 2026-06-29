@@ -69,8 +69,8 @@ jobs:
             version-update:semver-major) word="major" ;;
             *) word="unknown" ;;
           esac
-          allowed=" ${ALLOWED//,/ } "
-          if [[ "$allowed" != *" $word "* ]]; then
+          allow_list=" ${ALLOWED//,/ } "
+          if [[ "$allow_list" != *" $word "* ]]; then
             echo "Update type '$word' ($UPDATE_TYPE) not in allowed set '$ALLOWED' — leaving for manual merge."
             exit 0
           fi
