@@ -1,3 +1,13 @@
+---
+id: 9ab96af2-f249-4ed3-abca-ec9e22928dc5
+type: procedural
+created: 2026-06-24T22:04:00-04:00
+namespace: _procedural/runbooks
+title: "modeled-information-format"
+tags:
+  - runbook
+---
+
 # modeled-information-format — org constitution runbook
 
 How the `modeled-information-format` org is constituted as a secure,
