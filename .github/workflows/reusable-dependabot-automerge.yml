@@ -53,6 +53,8 @@ jobs:
         with:
           client-id: ${{ vars.MIF_CI_CLIENT_APP_ID }}
           private-key: ${{ secrets.app-private-key }}
+          owner: ${{ github.repository_owner }}
+          repositories: ${{ github.event.repository.name }}
 
       - name: Approve and enable auto-merge for allowed update types
         env:
@@ -63,10 +65,17 @@ jobs:
           MERGE_METHOD: ${{ inputs.merge-method }}
         run: |
           set -euo pipefail
+          # Fail fast on an invalid merge method before any approval.
+          case "$MERGE_METHOD" in
+            squash|merge|rebase) ;;
+            *) echo "Invalid merge-method '$MERGE_METHOD' (expected squash|merge|rebase)." >&2; exit 1 ;;
+          esac
+          # fetch-metadata emits version-update:semver-* and, for security fixes,
+          # security-update:semver-* — match the semver suffix so both are handled.
           case "$UPDATE_TYPE" in
-            version-update:semver-patch) word="patch" ;;
-            version-update:semver-minor) word="minor" ;;
-            version-update:semver-major) word="major" ;;
+            *semver-patch) word="patch" ;;
+            *semver-minor) word="minor" ;;
+            *semver-major) word="major" ;;
             *) word="unknown" ;;
           esac
           allow_list=" ${ALLOWED//,/ } "
