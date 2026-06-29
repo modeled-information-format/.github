@@ -30,6 +30,7 @@ audience:
   - maintainers
 related:
   - ADR-002-reusable-quality-gate-architecture.md
+  - ADR-003-sast-gate-suite.md
   - ADR-004-supply-chain-scanning.md
   - ADR-007-scorecard-posture.md
 ---

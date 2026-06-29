@@ -27,6 +27,7 @@ audience:
 related:
   - ADR-002-reusable-quality-gate-architecture.md
   - ADR-005-signing-attestation-verification.md
+  - ADR-006-dast-and-load-testing.md
 ---
 
 # ADR-007: OpenSSF Scorecard Posture Assessment

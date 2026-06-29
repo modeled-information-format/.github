@@ -23,11 +23,15 @@ audience:
   - architects
   - maintainers
 related:
+  - ADR-001-org-label-sync.md
   - ADR-003-sast-gate-suite.md
   - ADR-004-supply-chain-scanning.md
   - ADR-005-signing-attestation-verification.md
   - ADR-006-dast-and-load-testing.md
   - ADR-007-scorecard-posture.md
+  - ADR-008-github-app-ci-identity.md
+  - ADR-009-branch-protection-standardization.md
+  - ADR-010-plugin-catalog-hub.md
 ---
 
 # ADR-002: Reusable Attested Quality-Gate Architecture
