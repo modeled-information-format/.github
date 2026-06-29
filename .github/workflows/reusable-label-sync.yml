@@ -66,7 +66,7 @@ jobs:
           merged = {}
           for path in ("/tmp/org-labels.yml", os.environ["LOCAL_LABELS"]):
               try:
-                  data = yaml.safe_load(open(path)) or []
+                  data = yaml.safe_load(open(path, encoding="utf-8")) or []
               except FileNotFoundError:
                   data = []
               for label in data:
