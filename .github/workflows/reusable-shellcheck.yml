@@ -52,17 +52,52 @@ jobs:
         with:
           fetch-depth: 0
 
+      # differential-shellcheck only accepts triggering-event values of
+      # merge_group | pull_request | push | manual and defaults to github.event_name.
+      # On workflow_dispatch (manual Release) and schedule it therefore fails. Those
+      # events have no diff context, so resolve them to a full strict scan: map to
+      # push + strict-check-on-push so the action reports every defect over the whole
+      # tree (the strict path does not check out base; base/head only need to be
+      # non-empty to pass the action's guard). Native push/pull_request/merge_group
+      # keep their normal differential behavior and inputs.
+      - name: Resolve ShellCheck scan mode
+        id: trig
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          EVENT_BEFORE: ${{ github.event.before }}
+          EVENT_AFTER: ${{ github.event.after }}
+          HEAD_SHA: ${{ github.sha }}
+          STRICT_DEFAULT: ${{ inputs.strict-on-push }}
+        run: |
+          set -euo pipefail
+          case "${EVENT_NAME}" in
+            push | pull_request | merge_group)
+              {
+                echo "event=${EVENT_NAME}"
+                echo "strict=${STRICT_DEFAULT}"
+                echo "base=${EVENT_BEFORE}"
+                echo "head=${EVENT_AFTER}"
+              } >> "${GITHUB_OUTPUT}"
+              ;;
+            *)
+              {
+                echo "event=push"
+                echo "strict=true"
+                echo "base=${HEAD_SHA}"
+                echo "head=${HEAD_SHA}"
+              } >> "${GITHUB_OUTPUT}"
+              ;;
+          esac
+
       - name: Differential ShellCheck (full tree → SARIF)
         id: shellcheck
         uses: redhat-plumbers-in-action/differential-shellcheck@d965e66ec0b3b2f821f75c8eff9b12442d9a7d1e # v5.5.6
         with:
           diff-scan: false
-          # The action only accepts merge_group | pull_request | push | manual and
-          # defaults to github.event_name, so workflow_dispatch (manual Release) and
-          # schedule otherwise fail it. Pass the event through when supported, else
-          # 'manual' (full-tree scan, since diff-scan is false).
-          triggering-event: ${{ contains(fromJSON('["push","pull_request","merge_group"]'), github.event_name) && github.event_name || 'manual' }}
-          strict-check-on-push: ${{ inputs.strict-on-push }}
+          triggering-event: ${{ steps.trig.outputs.event }}
+          strict-check-on-push: ${{ steps.trig.outputs.strict }}
+          push-event-base: ${{ steps.trig.outputs.base }}
+          push-event-head: ${{ steps.trig.outputs.head }}
           token: ${{ github.token }}
 
       - name: Normalize SARIF filename for the seam
