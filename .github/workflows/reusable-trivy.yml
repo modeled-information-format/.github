@@ -74,12 +74,59 @@ jobs:
       - name: Checkout
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
 
+      # Centralized org Trivy policy — the single source of truth for the
+      # accepted-license allowlist, written outside the scanned tree and applied
+      # to every caller via `trivy-config`. The pinned trivy-action does not apply
+      # the `--severity HIGH,CRITICAL` filter to license findings, so without this
+      # allowlist every transitive dependency's license surfaces as its own
+      # code-scanning alert (hundreds of license classifications, not CVEs; the
+      # OSV-Scanner gate covers vulnerabilities). The list below ignores the
+      # licenses the org accepts: permissive/notice/public-domain, the weak
+      # (file-level) copyleft MPL-2.0, and the documented sharp/libvips build-time
+      # LGPL exception. Strong copyleft (GPL/AGPL) and forbidden licenses are NOT
+      # listed and remain flagged. `--config` replaces (does not merge with) an
+      # auto-loaded repo trivy.yaml, so the common skip-dirs are folded in here.
+      - name: Write centralized Trivy policy
+        run: |
+          cat > "${RUNNER_TEMP}/trivy.yaml" <<'EOF'
+          scan:
+            skip-dirs:
+              - "**/node_modules"
+              - "**/.venv"
+          license:
+            ignored:
+              # sharp / libvips (Astro image optimization) build-time LGPL —
+              # dynamically linked, imposes no copyleft on generated output.
+              - LGPL-3.0-or-later
+              - LGPL-3.0-only
+              - LGPL-3.0
+              - Apache-2.0 AND LGPL-3.0-or-later
+              - Apache-2.0 AND LGPL-3.0-or-later AND MIT
+              # Permissive / notice / public-domain (accepted by policy)
+              - Apache-2.0
+              - MIT
+              - ISC
+              - BSD-2-Clause
+              - BSD-3-Clause
+              - BSD-3-Clause-Clear
+              - 0BSD
+              - CC0-1.0
+              - Unlicense
+              - Python-2.0
+              - BlueOak-1.0.0
+              - Zlib
+              # Weak / file-level copyleft (e.g. lightningcss); copyleft confined
+              # to the dependency's own files — accepted by policy.
+              - MPL-2.0
+          EOF
+
       - name: Trivy IaC + license scan (filesystem)
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
           scan-type: fs
           scan-ref: .
           scanners: misconfig,license
+          trivy-config: ${{ runner.temp }}/trivy.yaml
           format: sarif
           output: trivy-iac-license.sarif
           severity: ${{ inputs.severity }}
