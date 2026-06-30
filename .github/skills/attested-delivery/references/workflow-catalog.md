@@ -333,6 +333,21 @@ SARIF. Pure stdlib Python; soft-fail.
 - **Seam predicate:** `.../attestations/manifest/v1`.
 - **Allow-list:** none (pure stdlib Python; GitHub-created actions).
 
+### `${CLAUDE_PLUGIN_ROOT}/workflows/reusable-changelog-check.yml` — changelog gate
+Fail-closed gate asserting that the version being released has a non-empty
+`## [<version>]` section in `CHANGELOG.md`. A caller's release workflow makes its
+build/attest job `needs` this so a version pointer cannot ship while its changelog
+entry is missing or empty (a drift the auto-generated GitHub release notes masked).
+A non-release invocation (no version, e.g. a `workflow_dispatch` dry-run) passes
+cleanly.
+
+- **Inputs:** `version` (required; leading `v` optional, empty = skip);
+  `changelog-path` (default `CHANGELOG.md`).
+- **Outputs:** none.
+- **Permissions:** job `changelog-check` needs `contents: read`.
+- **Predicate:** none — this is a release-hygiene gate, not a SARIF/attestation seam.
+- **Allow-list:** none (GitHub-created `actions/checkout` only).
+
 ### `${CLAUDE_PLUGIN_ROOT}/workflows/reusable-cosign-sign.yml` — keyless blob signing
 Sign a plain **blob** (e.g. a `marketplace.json` catalog, which is not a registry
 package) with Sigstore cosign keyless signing, and verify the bundle back in-run

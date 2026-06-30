@@ -1,0 +1,77 @@
+---
+name: Reusable / Changelog check
+
+# Fail-closed gate: a release version MUST have a non-empty CHANGELOG section.
+#
+# Callers pass the version being released (with or without a leading `v`). This
+# asserts CHANGELOG.md contains a `## [<version>]` header followed by real
+# content (at least one bullet or prose line) before the next `## [` header.
+# This stops the recurring drift where the version pointer bumps but the
+# changelog entry is empty or missing, masked by auto-generated release notes.
+#
+# Usage (in a release workflow, before building):
+#   jobs:
+#     changelog:
+#       uses: modeled-information-format/.github/.github/workflows/reusable-changelog-check.yml@<sha>
+#       with:
+#         version: ${{ github.ref_name }}   # e.g. v1.2.3
+#         changelog-path: CHANGELOG.md       # optional, this is the default
+
+"on":
+  workflow_call:
+    inputs:
+      version:
+        description: "Version being released (leading v optional, e.g. v1.2.3 or 1.2.3)."
+        required: true
+        type: string
+      changelog-path:
+        description: "Path to the changelog file."
+        required: false
+        type: string
+        default: "CHANGELOG.md"
+
+permissions:
+  contents: read
+
+jobs:
+  changelog-check:
+    name: changelog-check
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Assert a non-empty changelog section for the version
+        env:
+          VERSION: ${{ inputs.version }}
+          FILE: ${{ inputs.changelog-path }}
+        run: |
+          set -euo pipefail
+          # A non-release invocation (e.g. a workflow_dispatch dry-run) supplies
+          # no version — there is no release to gate, so pass cleanly.
+          if [ -z "$VERSION" ]; then
+            echo "changelog-check: no version supplied (non-release invocation) — skipping"
+            exit 0
+          fi
+          v="${VERSION#v}"   # strip a leading v
+          if [ ! -f "$FILE" ]; then
+            echo "::error::changelog-check: $FILE not found"; exit 1
+          fi
+          if ! grep -qE "^## \[${v//./\\.}\]" "$FILE"; then
+            echo "::error::changelog-check: no '## [$v]' section in $FILE — add a dated entry per Keep a Changelog before releasing"
+            exit 1
+          fi
+          # Extract the section body (between this header and the next '## [').
+          section="$(awk -v ver="$v" '
+            $0 ~ ("^## \\[" ver "\\]") {f=1; next}
+            f && /^## \[/ {exit}
+            f {print}
+          ' "$FILE")"
+          # Non-empty = at least one bullet or prose line (ignore blanks and lone "### " group headers).
+          if ! printf '%s\n' "$section" | grep -qE '^[-*] |^[A-Za-z0-9]'; then
+            echo "::error::changelog-check: the '## [$v]' section in $FILE is empty — fill in the Added/Changed/Fixed entries before releasing"
+            exit 1
+          fi
+          echo "changelog-check: '## [$v]' has content — OK"
