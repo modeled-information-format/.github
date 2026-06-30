@@ -3,7 +3,7 @@ name: Reusable / Dependabot auto-merge
 
 # Approve + enable auto-merge for Dependabot PRs whose semver update type is in the
 # allowed set (default: patch only; minor/major stay manual). Dependabot cannot
-# approve its own PR, so the required review is satisfied by the org CI App (its
+# approve its own PR, so the required review is satisfied by the org automerge App (its
 # Client ID is in vars.AUTOMERGE_CLIENT_APP_ID; pass its private key as the
 # app-private-key secret).
 #

@@ -39,6 +39,10 @@ jobs:
           set -euo pipefail
           errors=$(jq -r '
             [
+              (if .version == 1 then empty else "version must be 1 (got \(.version|tostring))" end),
+              (if .identifier == "client-id" then empty else "identifier must be \"client-id\" (got \(.identifier|tostring))" end),
+              (keys[] as $k | select((["$schema","description","version","mint_action","identifier","apps"] | index($k)) == null)
+               | "unknown top-level key \($k)"),
               (if (.mint_action | test("^actions/create-github-app-token@[0-9a-f]{40}$")) then empty
                else "mint_action not SHA-pinned: \(.mint_action)" end),
               (.apps | to_entries[] as $e | ($e.key | ascii_upcase | gsub("-";"_")) as $r

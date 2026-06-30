@@ -13,7 +13,7 @@
     "mint_action": {
       "type": "string",
       "description": "The token-minting action, SHA-pinned (40-char) with a version comment.",
-      "pattern": "^actions/create-github-app-token@[0-9a-f]{40}"
+      "pattern": "^actions/create-github-app-token@[0-9a-f]{40}$"
     },
     "identifier": {
       "type": "string",
@@ -68,7 +68,7 @@
           "minItems": 1,
           "items": {
             "type": "string",
-            "description": "Repo-relative workflow path that mints this App's token.",
+            "description": "Repo-qualified workflow path (<repo>/.github/workflows/...) that mints this App's token.",
             "pattern": "\\.ya?ml$"
           },
           "uniqueItems": true
