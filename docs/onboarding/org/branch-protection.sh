@@ -43,6 +43,15 @@ print(json.dumps([l for l in sys.stdin.read().splitlines() if l.strip()]))')"
 echo "== Applying org-standard branch protection to $REPO@$BRANCH =="
 echo "   required checks: $(printf '%s\n' "${CONTEXTS[@]:-}" | grep -c . || true)"
 
+# Enable repo-level auto-merge so `gh pr merge --auto` works (e.g. the catalog
+# update hub and Dependabot open auto-merge PRs). Idempotent.
+echo "== Enabling allow_auto_merge on $REPO =="
+gh api -X PATCH "/repos/$REPO" -F allow_auto_merge=true >/dev/null
+
+# The org CI App authors zero-touch re-pin PRs (catalog update hub) and cannot
+# approve its own PR, so it is allowed to BYPASS the required review. Human PRs
+# still need a review; the required status checks (incl. catalog-admission) remain
+# the gate for the App's auto-merge.
 gh api -X PUT "/repos/$REPO/branches/$BRANCH/protection" \
   -H "Accept: application/vnd.github+json" \
   --input - >/dev/null <<JSON
@@ -52,7 +61,12 @@ gh api -X PUT "/repos/$REPO/branches/$BRANCH/protection" \
   "required_pull_request_reviews": {
     "required_approving_review_count": 1,
     "dismiss_stale_reviews": true,
-    "require_code_owner_reviews": false
+    "require_code_owner_reviews": false,
+    "bypass_pull_request_allowances": {
+      "users": [],
+      "teams": [],
+      "apps": ["modeled-information-format-ci"]
+    }
   },
   "restrictions": null,
   "required_linear_history": true,
@@ -66,6 +80,7 @@ echo "   -> applied. Current state:"
 gh api "/repos/$REPO/branches/$BRANCH/protection" --jq '{
   require_pr: (.required_pull_request_reviews != null),
   approvals: .required_pull_request_reviews.required_approving_review_count,
+  review_bypass_apps: [.required_pull_request_reviews.bypass_pull_request_allowances.apps[]?.slug],
   strict_up_to_date: .required_status_checks.strict,
   required_checks: (.required_status_checks.contexts | length),
   enforce_admins: .enforce_admins.enabled,
@@ -74,3 +89,4 @@ gh api "/repos/$REPO/branches/$BRANCH/protection" --jq '{
   linear_history: .required_linear_history.enabled,
   conversation_resolution: .required_conversation_resolution.enabled
 }'
+gh api "/repos/$REPO" --jq '{allow_auto_merge}'
