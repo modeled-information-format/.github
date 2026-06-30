@@ -1,6 +1,6 @@
 ---
-title: "Least-Privilege GitHub-App Fleet (Five Apps, One Naming Scheme, Central Manifest)"
-description: "Supersedes ADR-008: split the single CI App into five least-privilege GitHub Apps (ci, catalog, pages, automerge, release), each minting tokens via SHA-pinned create-github-app-token with the OAuth client-id, under one <ROLE>_CLIENT_APP_ID/_PRIVATE_KEY scheme validated by a jq apps.json gate."
+title: "Least-Privilege App Fleet and Org-Wide Standard Gate Suite"
+description: "Supersedes ADR-008: five least-privilege Apps (ci, catalog, pages, automerge, release) installed org-wide, minted via the OAuth client-id under one <ROLE>_CLIENT_APP_ID/_PRIVATE_KEY scheme in a jq-gated apps.json. Every org repo standardizes on the full gate suite authenticated by these apps."
 type: adr
 conceptType: semantic
 x-ontology:
@@ -35,7 +35,7 @@ related:
   - ADR-010-plugin-catalog-hub.md
 ---
 
-# ADR-011: Least-Privilege GitHub-App Fleet (Five Apps, One Naming Scheme, Central Manifest)
+# ADR-011: Least-Privilege App Fleet and Org-Wide Standard Gate Suite
 
 ## Status
 
@@ -87,6 +87,9 @@ key is a leak of all that authority.
    permissions, its install scope, and its consuming workflows, validated in CI.
 4. **Current GitHub best practice**: Minting must use the App OAuth `client-id`,
    not the deprecated `app-id`.
+5. **Uniform org-wide posture**: Every repo must run the same reusable gate suite
+   on the same shared identities, so security and governance coverage does not
+   depend on per-repo wiring that drifts or is forgotten.
 
 ### Secondary Decision Drivers
 
@@ -219,6 +222,16 @@ attestation is unchanged, so the attestation signer SAN stays the workflow and
 `gh attestation verify` is unaffected (consistent with ADR-005/ADR-008's separation
 of signing from the automation identity).
 
+**Org-wide standardization.** Every org repo adopts the full reusable gate suite —
+`quality-gates`, `scorecard`, `dependabot-automerge`, `label-sync`, the SAST/SCA
+gates, `dast`, `release`, and `deploy` where applicable — authenticated by these
+five apps. The apps are **installed org-wide** (`auth/apps.json` `install_on: all`)
+and each workflow mints only the apps its gates use. Repos are brought onto the
+standard suite under epic #37; the apps exist precisely because the suite runs
+everywhere, not on a hand-picked subset. The mint pattern (ADR-002's reusable
+gate architecture) extends ADR-002 from "the gates that exist are reusable" to
+"every repo runs them on shared least-privilege identities."
+
 ## Consequences
 
 ### Positive
@@ -233,6 +246,8 @@ of signing from the automation identity).
 4. **Current best practice, no new surface**: Minting uses the client-id and only
    the already-pinned mint action; no composite, no new allow-list entries.
 5. **Signing stays keyless and separate**: SLSA attestation is untouched.
+6. **Uniform posture**: Every repo runs the same gates on the same identities, so
+   coverage no longer depends on per-repo wiring being remembered.
 
 ### Negative
 
@@ -241,6 +256,9 @@ of signing from the automation identity).
 2. **Staged cutover**: The workflows fail until all five Apps exist and their
    credentials are provisioned; the change lands as draft PRs that go green on
    provisioning.
+3. **Onboarding cost**: Thin repos (mnemonic, structured-madr, ...) need net-new
+   caller workflows wired to their own toolchain to reach the standard suite; this
+   is tracked per-repo under epic #37.
 
 ### Neutral
 

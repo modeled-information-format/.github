@@ -52,10 +52,16 @@
           }
         },
         "install_on": {
-          "type": "array",
-          "minItems": 1,
-          "items": { "type": "string", "minLength": 1 },
-          "uniqueItems": true
+          "description": "Repos the App is installed on. \"all\" means every org repo (org-wide install); an array names a specific subset.",
+          "oneOf": [
+            { "const": "all" },
+            {
+              "type": "array",
+              "minItems": 1,
+              "items": { "type": "string", "minLength": 1 },
+              "uniqueItems": true
+            }
+          ]
         },
         "consumers": {
           "type": "array",
