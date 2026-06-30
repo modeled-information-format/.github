@@ -4,7 +4,7 @@ name: Reusable / Dependabot auto-merge
 # Approve + enable auto-merge for Dependabot PRs whose semver update type is in the
 # allowed set (default: patch only; minor/major stay manual). Dependabot cannot
 # approve its own PR, so the required review is satisfied by the org CI App (its
-# Client ID is in vars.MIF_CI_CLIENT_APP_ID; pass its private key as the
+# Client ID is in vars.AUTOMERGE_CLIENT_APP_ID; pass its private key as the
 # app-private-key secret).
 #
 # Callers MUST trigger on `pull_request_target` — Dependabot's own `pull_request`
@@ -28,8 +28,8 @@ on:
     secrets:
       app-private-key:
         description: >-
-          Private key of the org CI GitHub App (its Client ID is in
-          vars.MIF_CI_CLIENT_APP_ID). Used to approve the PR as a non-Dependabot
+          Private key of the org automerge GitHub App (its Client ID is in
+          vars.AUTOMERGE_CLIENT_APP_ID). Used to approve the PR as a non-Dependabot
           identity so the required review is satisfied.
         required: true
 
@@ -51,7 +51,7 @@ jobs:
         id: app
         uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
         with:
-          client-id: ${{ vars.MIF_CI_CLIENT_APP_ID }}
+          client-id: ${{ vars.AUTOMERGE_CLIENT_APP_ID }}
           private-key: ${{ secrets.app-private-key }}
           owner: ${{ github.repository_owner }}
           repositories: ${{ github.event.repository.name }}

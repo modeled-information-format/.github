@@ -66,11 +66,11 @@ is deprecated). Scope both to the `.github` repo, where the hub runs:
 
 ```bash
 # App client id (public identifier, e.g. Iv23li...) — org variable
-gh variable set CATALOG_UPDATER_APP_CLIENT_ID --org modeled-information-format \
+gh variable set CATALOG_CLIENT_APP_ID --org modeled-information-format \
   --visibility selected --repos .github --body "<CLIENT_ID>"
 
 # App private key — org secret (reads the .pem; value never printed)
-gh secret set CATALOG_UPDATER_APP_PRIVATE_KEY --org modeled-information-format \
+gh secret set CATALOG_CLIENT_APP_PRIVATE_KEY --org modeled-information-format \
   --visibility selected --repos .github < ~/.secrets/modeled-information-format-ci.pem
 ```
 

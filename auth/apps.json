@@ -1,0 +1,80 @@
+{
+  "$schema": "./apps.schema.json",
+  "description": "MIF org GitHub-App auth manifest — single source of truth. Five least-privilege GitHub Apps mint short-lived installation tokens for org workflows. Each App is identified by its OAuth client-id (GitHub's current best practice; the legacy numeric app-id is deprecated and warns). Per app: id_variable = org Actions VARIABLE holding the OAuth client-id (Iv23...; public, so optional-App jobs may gate on it in if:); key_secret = org Actions SECRET holding the App private key (PEM); permissions = installed least-privilege set (Repository perms unless prefixed org:; metadata:read implicit); install_on = repos the App is scoped to; consumers = workflows that mint this App's token. Tokens are minted with the SHA-pinned mint_action via its client-id input. Governed by ADR-011 (supersedes ADR-008); validated in CI by .github/workflows/app-manifest-validate.yml against auth/apps.schema.json.",
+  "version": 1,
+  "mint_action": "actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1",
+  "identifier": "client-id",
+  "apps": {
+    "ci": {
+      "purpose": "General CI cross-repo identity. Reads org/sibling state the default GITHUB_TOKEN cannot — primary consumer is OpenSSF Scorecard reading branch protection (administration:read) so posture scores from real settings.",
+      "id_variable": "CI_CLIENT_APP_ID",
+      "key_secret": "CI_CLIENT_APP_PRIVATE_KEY",
+      "permissions": {
+        "contents": "read",
+        "administration": "read",
+        "pull_requests": "read",
+        "issues": "read",
+        "actions": "read",
+        "checks": "read"
+      },
+      "install_on": ["MIF", "ontologies", "claude-code-plugins"],
+      "consumers": [".github/.github/workflows/reusable-scorecard.yml"]
+    },
+    "catalog": {
+      "purpose": "Marketplace catalog updates — re-pins external plugin entries to their latest attested release and opens auto-merge PRs against the catalog.",
+      "id_variable": "CATALOG_CLIENT_APP_ID",
+      "key_secret": "CATALOG_CLIENT_APP_PRIVATE_KEY",
+      "permissions": {
+        "contents": "write",
+        "actions": "write",
+        "pull_requests": "write"
+      },
+      "install_on": ["claude-code-plugins", "mif-docs-plugin"],
+      "consumers": [".github/.github/workflows/plugin-catalog-update-hub.yml"]
+    },
+    "pages": {
+      "purpose": "Cross-repo org Pages deploy/notify — docs-source repos build then notify the github.io assembly repo to compose and deploy.",
+      "id_variable": "PAGES_CLIENT_APP_ID",
+      "key_secret": "PAGES_CLIENT_APP_PRIVATE_KEY",
+      "permissions": {
+        "contents": "write",
+        "pages": "write",
+        "actions": "write"
+      },
+      "install_on": ["modeled-information-format.github.io", "research-harness-template", "doc-site", "MIF"],
+      "consumers": [
+        "modeled-information-format.github.io/.github/workflows/deploy.yml",
+        "research-harness-template/.github/workflows/docs.yml",
+        "doc-site/.github/workflows/docs.yml"
+      ]
+    },
+    "automerge": {
+      "purpose": "Dependabot auto-approve and merge. Dependabot cannot approve its own PR; this App supplies the non-Dependabot approval identity.",
+      "id_variable": "AUTOMERGE_CLIENT_APP_ID",
+      "key_secret": "AUTOMERGE_CLIENT_APP_PRIVATE_KEY",
+      "permissions": {
+        "contents": "write",
+        "pull_requests": "write"
+      },
+      "install_on": ["claude-code-plugins", "doc-site", "mif-docs-plugin", "MIF", "ontologies", "research-harness-template", ".github"],
+      "consumers": [".github/.github/workflows/reusable-dependabot-automerge.yml"]
+    },
+    "release": {
+      "purpose": "Authenticates the gh release / contents-write steps in release.yml. The keyless OIDC attestation (id-token + attestations) is unchanged — the attestation signer SAN stays the workflow, so gh attestation verify is unaffected. This App only authenticates the publish/contents steps.",
+      "id_variable": "RELEASE_CLIENT_APP_ID",
+      "key_secret": "RELEASE_CLIENT_APP_PRIVATE_KEY",
+      "permissions": {
+        "contents": "write",
+        "packages": "write"
+      },
+      "install_on": ["claude-code-plugins", "mif-docs-plugin", "MIF", "ontologies", "research-harness-template"],
+      "consumers": [
+        "MIF/.github/workflows/release.yml",
+        "ontologies/.github/workflows/release.yml",
+        "research-harness-template/.github/workflows/release.yml",
+        "mif-docs-plugin/.github/workflows/release.yml",
+        "claude-code-plugins/.github/workflows/release.yml"
+      ]
+    }
+  }
+}

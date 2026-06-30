@@ -69,12 +69,12 @@ optional local labels to the calling repository, via `github-label-sync`.
 ### `${CLAUDE_PLUGIN_ROOT}/workflows/reusable-dependabot-automerge.yml` — Dependabot auto-merge
 Approve + enable auto-merge for Dependabot PRs whose semver update type is in the
 allowed set (patch only by default; minor/major stay manual). Approval comes from
-the org CI App because Dependabot cannot approve its own PR.
+the org automerge App because Dependabot cannot approve its own PR.
 
 - **Inputs:** `update-types` (string, default `patch`); `merge-method` (string,
   default `squash`).
-- **Secrets:** `app-private-key` (required) — org CI App private key (its Client ID
-  is in `vars.MIF_CI_CLIENT_APP_ID`). **Outputs:** none.
+- **Secrets:** `app-private-key` (required) — org automerge App private key (its Client ID
+  is in `vars.AUTOMERGE_CLIENT_APP_ID`). **Outputs:** none.
 - **Permissions:** `contents: read`, `pull-requests: read` (writes use the minted
   App token, not `GITHUB_TOKEN`).
 - **Trigger:** callers MUST use `pull_request_target` (Dependabot's `pull_request`

@@ -33,7 +33,7 @@ on:
       app-private-key:
         description: >-
           Private key of the org CI GitHub App (its Client ID is in
-          vars.MIF_CI_CLIENT_APP_ID). When provided, Scorecard reads branch
+          vars.CI_CLIENT_APP_ID). When provided, Scorecard reads branch
           protection via an App installation token (administration:read), so the
           Branch-Protection check is scored from real settings rather than the
           incomplete data the default GITHUB_TOKEN can see. Omit to fall back to
@@ -72,11 +72,11 @@ jobs:
       # passed, and repo_token below falls back to GITHUB_TOKEN.
       - name: Mint CI App token (Branch-Protection read)
         id: app-token
-        if: ${{ vars.MIF_CI_CLIENT_APP_ID != '' }}
+        if: ${{ vars.CI_CLIENT_APP_ID != '' }}
         continue-on-error: true
         uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
         with:
-          client-id: ${{ vars.MIF_CI_CLIENT_APP_ID }}
+          client-id: ${{ vars.CI_CLIENT_APP_ID }}
           private-key: ${{ secrets.app-private-key }}
           owner: ${{ github.repository_owner }}
           repositories: ${{ github.event.repository.name }}

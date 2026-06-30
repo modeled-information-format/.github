@@ -4,6 +4,9 @@ Org-wide community-health defaults, reusable attested quality-gate workflows,
 and the centralized signing/verification workflows for the **modeled-information-format**
 organization.
 
+[![auth: 5 least-privilege apps](https://img.shields.io/badge/auth-5%20least--privilege%20apps-F5B642?logo=github&logoColor=white)](docs/adr/ADR-011-least-privilege-app-fleet.md)
+[![apps manifest: jq-validated](https://img.shields.io/badge/apps%20manifest-jq--validated-34D3E8?logo=githubactions&logoColor=white)](auth/apps.json)
+
 ## GitHub Actions policy
 
 Org → Settings → Actions → General. The org runs a **fail-closed, SHA-pinned**

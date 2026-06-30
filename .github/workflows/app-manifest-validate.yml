@@ -1,0 +1,54 @@
+---
+name: app-manifest-validate
+
+# Validate auth/apps.yml — the org GitHub-App auth manifest — against
+# auth/apps.schema.json plus the cross-checks in auth/validate-apps.py (role-prefix
+# consistency, credential-name uniqueness, SHA-pinned mint action). Fail-closed.
+#
+# Runs on PRs and pushes that touch auth/**, and is exposed via workflow_call so
+# other repos could validate a vendored copy. Governed by ADR-011.
+
+on:
+  pull_request:
+    paths:
+      - 'auth/**'
+      - '.github/workflows/app-manifest-validate.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'auth/**'
+      - '.github/workflows/app-manifest-validate.yml'
+  workflow_call: {}
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: validate apps manifest
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Validate auth/apps.json (jq; pre-installed on the runner)
+        run: |
+          set -euo pipefail
+          errors=$(jq -r '
+            [
+              (if (.mint_action | test("^actions/create-github-app-token@[0-9a-f]{40}$")) then empty
+               else "mint_action not SHA-pinned: \(.mint_action)" end),
+              (.apps | to_entries[] as $e | ($e.key | ascii_upcase | gsub("-";"_")) as $r
+               | (if $e.value.id_variable != "\($r)_CLIENT_APP_ID"
+                  then "app \($e.key): id_variable must be \($r)_CLIENT_APP_ID (got \($e.value.id_variable))" else empty end),
+                 (if $e.value.key_secret != "\($r)_CLIENT_APP_PRIVATE_KEY"
+                  then "app \($e.key): key_secret must be \($r)_CLIENT_APP_PRIVATE_KEY" else empty end),
+                 (["purpose","permissions","install_on","consumers"][] as $k
+                  | if ($e.value|has($k)) then empty else "app \($e.key): missing \($k)" end)),
+              (.apps | [to_entries[].value.id_variable] | group_by(.)[] | select(length>1) | "duplicate id_variable: \(.[0])"),
+              (.apps | [to_entries[].value.key_secret] | group_by(.)[] | select(length>1) | "duplicate key_secret: \(.[0])")
+            ] | .[]' auth/apps.json)
+          if [ -n "$errors" ]; then
+            echo "apps.json: FAIL"; echo "$errors" | awk '{print "  - " $0}'; exit 1
+          fi
+          echo "apps.json: PASS — $(jq '.apps | length' auth/apps.json) apps verified."

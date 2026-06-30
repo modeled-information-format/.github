@@ -98,6 +98,18 @@ having run. Consumers verify independently with `gh attestation verify`.
 3. **Ephemeral credentials only** — all signing uses the GitHub OIDC token; no long-lived secrets.
 4. **SHA-pinned always** — every `uses:` is pinned to a full 40-char commit SHA.
 
+### Automation identity
+
+Org workflows mint short-lived installation tokens from **five least-privilege
+GitHub Apps**, each scoped to one job — no single key carries the whole automation
+surface ([ADR-011](https://github.com/modeled-information-format/.github/blob/main/docs/adr/ADR-011-least-privilege-app-fleet.md)):
+
+[![app: ci](https://img.shields.io/badge/app-ci-34D3E8?logo=github&logoColor=white)](https://github.com/modeled-information-format/.github/blob/main/docs/adr/ADR-011-least-privilege-app-fleet.md)
+[![app: catalog](https://img.shields.io/badge/app-catalog-F5B642?logo=github&logoColor=white)](https://github.com/modeled-information-format/.github/blob/main/docs/adr/ADR-011-least-privilege-app-fleet.md)
+[![app: pages](https://img.shields.io/badge/app-pages-F5B642?logo=github&logoColor=white)](https://github.com/modeled-information-format/.github/blob/main/docs/adr/ADR-011-least-privilege-app-fleet.md)
+[![app: automerge](https://img.shields.io/badge/app-automerge-F5B642?logo=github&logoColor=white)](https://github.com/modeled-information-format/.github/blob/main/docs/adr/ADR-011-least-privilege-app-fleet.md)
+[![app: release](https://img.shields.io/badge/app-release-F5B642?logo=github&logoColor=white)](https://github.com/modeled-information-format/.github/blob/main/docs/adr/ADR-011-least-privilege-app-fleet.md)
+
 ---
 
 ## Getting Started
