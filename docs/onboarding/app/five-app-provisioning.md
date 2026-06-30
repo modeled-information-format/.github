@@ -10,22 +10,28 @@ Each app mints short-lived installation tokens via SHA-pinned
 `<ROLE>_CLIENT_APP_ID`; the private key in an org **secret**
 `<ROLE>_CLIENT_APP_PRIVATE_KEY`; both at visibility **All**.
 
+> Every value below is in its own code block — use the copy button. Repository
+> permissions are toggles in the form, not pasteable strings, so they stay as a list.
+
 ## Common settings (identical for all five)
 
 Set these on every app in the **Register new GitHub App** form
 (`https://github.com/organizations/modeled-information-format/settings/apps/new`):
 
-| Field | Value |
-| --- | --- |
-| Homepage URL | `https://mif-spec.dev` |
-| Callback URL | *(leave blank)* |
-| Setup URL | *(leave blank)* |
-| Webhook -> Active | **Unchecked** (token-minting identity, not webhook-driven) |
-| Webhook URL | *(blank; allowed once Active is off)* |
-| Organization permissions | None (all "No access") |
-| Account permissions | None (all "No access") |
-| Subscribe to events | None |
-| Where can this app be installed? | **Only on this account** (`modeled-information-format`) |
+**Homepage URL** (same for all five):
+
+```text
+https://mif-spec.dev
+```
+
+- Callback URL — *leave blank*
+- Setup URL — *leave blank*
+- Webhook -> Active — **Unchecked** (token-minting identity, not webhook-driven)
+- Webhook URL — *blank (allowed once Active is off)*
+- Organization permissions — None (all "No access")
+- Account permissions — None (all "No access")
+- Subscribe to events — None
+- Where can this app be installed? — **Only on this account** (`modeled-information-format`)
 
 Every repository permission not listed for an app stays **No access**.
 `Metadata: Read-only` is set automatically by GitHub.
@@ -36,64 +42,180 @@ After creating each app:
 2. **Copy the Client ID** (`Iv23...`) and store it in the app's org variable.
 3. **Install** the app on **All repositories** in the org.
 
-## The five apps
+---
 
-### 1. `ci` — CI / OpenSSF Scorecard identity
+## 1. `ci` — CI / OpenSSF Scorecard identity
 
-| Field | Value |
-| --- | --- |
-| GitHub App name | `MIF CI` (slug `mif-ci`; if taken, `MIF CI (modeled-information-format)`) |
-| Homepage URL | `https://mif-spec.dev` |
-| Description | Org CI identity for the modeled-information-format org. Mints short-lived installation tokens for read-only cross-repo CI — primarily OpenSSF Scorecard reading branch protection. Least-privilege; governed by ADR-011. |
-| Repository permissions | `Administration: Read-only`, `Checks: Read-only`, `Contents: Read-only`, `Issues: Read-only`, `Pull requests: Read-only`, `Actions: Read-only` |
-| Org variable | `CI_CLIENT_APP_ID` |
-| Org secret | `CI_CLIENT_APP_PRIVATE_KEY` |
+App name:
+
+```text
+MIF CI
+```
+
+Description:
+
+```text
+Org CI identity for the modeled-information-format org. Mints short-lived installation tokens for read-only cross-repo CI — primarily OpenSSF Scorecard reading branch protection. Least-privilege; governed by ADR-011.
+```
+
+Repository permissions (set in the form):
+
+- Administration: Read-only
+- Checks: Read-only
+- Contents: Read-only
+- Issues: Read-only
+- Pull requests: Read-only
+- Actions: Read-only
 
 `Administration: Read-only` is what lets Scorecard score Branch-Protection from real settings.
 
-### 2. `catalog` — marketplace catalog updates
+Org variable (store the Client ID here):
 
-| Field | Value |
-| --- | --- |
-| GitHub App name | `MIF Catalog` (slug `mif-catalog`) |
-| Homepage URL | `https://mif-spec.dev` |
-| Description | Updates the modeled-information-format Claude Code plugin marketplace catalog — re-pins external plugin entries to their latest attested release and opens auto-merge PRs. Least-privilege; governed by ADR-011. |
-| Repository permissions | `Contents: Read and write`, `Pull requests: Read and write`, `Actions: Read and write` |
-| Org variable | `CATALOG_CLIENT_APP_ID` |
-| Org secret | `CATALOG_CLIENT_APP_PRIVATE_KEY` |
+```text
+CI_CLIENT_APP_ID
+```
 
-### 3. `pages` — cross-repo org Pages deploy
+Org secret (store the private key here):
 
-| Field | Value |
-| --- | --- |
-| GitHub App name | `MIF Pages` (slug `mif-pages`) |
-| Homepage URL | `https://mif-spec.dev` |
-| Description | Cross-repo GitHub Pages deploy/notify for the modeled-information-format org — docs-source repos build, then notify the github.io assembly repo to compose and deploy. Least-privilege; governed by ADR-011. |
-| Repository permissions | `Contents: Read and write`, `Pages: Read and write`, `Actions: Read and write` |
-| Org variable | `PAGES_CLIENT_APP_ID` |
-| Org secret | `PAGES_CLIENT_APP_PRIVATE_KEY` |
+```text
+CI_CLIENT_APP_PRIVATE_KEY
+```
 
-### 4. `automerge` — Dependabot auto-merge
+---
 
-| Field | Value |
-| --- | --- |
-| GitHub App name | `MIF Automerge` (slug `mif-automerge`) |
-| Homepage URL | `https://mif-spec.dev` |
-| Description | Approves and enables auto-merge on Dependabot PRs across the modeled-information-format org (Dependabot cannot approve its own PR). Least-privilege; governed by ADR-011. |
-| Repository permissions | `Contents: Read and write`, `Pull requests: Read and write` |
-| Org variable | `AUTOMERGE_CLIENT_APP_ID` |
-| Org secret | `AUTOMERGE_CLIENT_APP_PRIVATE_KEY` |
+## 2. `catalog` — marketplace catalog updates
 
-### 5. `release` — release publish / contents
+App name:
 
-| Field | Value |
-| --- | --- |
-| GitHub App name | `MIF Release` (slug `mif-release`) |
-| Homepage URL | `https://mif-spec.dev` |
-| Description | Authenticates the gh release / contents-write steps in release workflows across the modeled-information-format org. Keyless OIDC attestation is unchanged. Least-privilege; governed by ADR-011. |
-| Repository permissions | `Contents: Read and write`, `Packages: Read and write` (Packages only where a repo publishes packages) |
-| Org variable | `RELEASE_CLIENT_APP_ID` |
-| Org secret | `RELEASE_CLIENT_APP_PRIVATE_KEY` |
+```text
+MIF Catalog
+```
+
+Description:
+
+```text
+Updates the modeled-information-format Claude Code plugin marketplace catalog — re-pins external plugin entries to their latest attested release and opens auto-merge PRs. Least-privilege; governed by ADR-011.
+```
+
+Repository permissions (set in the form):
+
+- Contents: Read and write
+- Pull requests: Read and write
+- Actions: Read and write
+
+Org variable:
+
+```text
+CATALOG_CLIENT_APP_ID
+```
+
+Org secret:
+
+```text
+CATALOG_CLIENT_APP_PRIVATE_KEY
+```
+
+---
+
+## 3. `pages` — cross-repo org Pages deploy
+
+App name:
+
+```text
+MIF Pages
+```
+
+Description:
+
+```text
+Cross-repo GitHub Pages deploy/notify for the modeled-information-format org — docs-source repos build, then notify the github.io assembly repo to compose and deploy. Least-privilege; governed by ADR-011.
+```
+
+Repository permissions (set in the form):
+
+- Contents: Read and write
+- Pages: Read and write
+- Actions: Read and write
+
+Org variable:
+
+```text
+PAGES_CLIENT_APP_ID
+```
+
+Org secret:
+
+```text
+PAGES_CLIENT_APP_PRIVATE_KEY
+```
+
+---
+
+## 4. `automerge` — Dependabot auto-merge
+
+App name:
+
+```text
+MIF Automerge
+```
+
+Description:
+
+```text
+Approves and enables auto-merge on Dependabot PRs across the modeled-information-format org (Dependabot cannot approve its own PR). Least-privilege; governed by ADR-011.
+```
+
+Repository permissions (set in the form):
+
+- Contents: Read and write
+- Pull requests: Read and write
+
+Org variable:
+
+```text
+AUTOMERGE_CLIENT_APP_ID
+```
+
+Org secret:
+
+```text
+AUTOMERGE_CLIENT_APP_PRIVATE_KEY
+```
+
+---
+
+## 5. `release` — release publish / contents
+
+App name:
+
+```text
+MIF Release
+```
+
+Description:
+
+```text
+Authenticates the gh release / contents-write steps in release workflows across the modeled-information-format org. Keyless OIDC attestation is unchanged. Least-privilege; governed by ADR-011.
+```
+
+Repository permissions (set in the form):
+
+- Contents: Read and write
+- Packages: Read and write (only where the repo publishes packages)
+
+Org variable:
+
+```text
+RELEASE_CLIENT_APP_ID
+```
+
+Org secret:
+
+```text
+RELEASE_CLIENT_APP_PRIVATE_KEY
+```
+
+---
 
 ## Credential name summary
 
