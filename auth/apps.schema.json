@@ -69,7 +69,7 @@
           "items": {
             "type": "string",
             "description": "Repo-qualified workflow path (<repo>/.github/workflows/...) that mints this App's token.",
-            "pattern": "\\.ya?ml$"
+            "pattern": "^[^/]+/\\.github/workflows/[^/]+\\.ya?ml$"
           },
           "uniqueItems": true
         }

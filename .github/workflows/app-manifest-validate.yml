@@ -58,8 +58,8 @@ jobs:
                   | "app \($e.key): permission \(.key)=\(.value|tostring) not in read|write|admin"),
                  (if ($e.value.install_on | type) == "string" and $e.value.install_on != "all"
                   then "app \($e.key): install_on string must be \"all\"" else empty end),
-                 (($e.value.consumers // [])[] | select(test("\\.ya?ml$") | not)
-                  | "app \($e.key): consumer \(.) is not a .yml path")),
+                 (($e.value.consumers // [])[] | select(test("^[^/]+/\\.github/workflows/[^/]+\\.ya?ml$") | not)
+                  | "app \($e.key): consumer \(.) is not a <repo>/.github/workflows/<file>.yml path")),
               (.apps | [to_entries[].value.id_variable] | group_by(.)[] | select(length>1) | "duplicate id_variable: \(.[0])"),
               (.apps | [to_entries[].value.key_secret] | group_by(.)[] | select(length>1) | "duplicate key_secret: \(.[0])")
             ] | .[]' auth/apps.json)
