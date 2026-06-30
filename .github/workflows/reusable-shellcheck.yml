@@ -57,6 +57,11 @@ jobs:
         uses: redhat-plumbers-in-action/differential-shellcheck@d965e66ec0b3b2f821f75c8eff9b12442d9a7d1e # v5.5.6
         with:
           diff-scan: false
+          # The action only accepts merge_group | pull_request | push | manual and
+          # defaults to github.event_name, so workflow_dispatch (manual Release) and
+          # schedule otherwise fail it. Pass the event through when supported, else
+          # 'manual' (full-tree scan, since diff-scan is false).
+          triggering-event: ${{ contains(fromJSON('["push","pull_request","merge_group"]'), github.event_name) && github.event_name || 'manual' }}
           strict-check-on-push: ${{ inputs.strict-on-push }}
           token: ${{ github.token }}
 
