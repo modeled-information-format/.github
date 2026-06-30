@@ -49,6 +49,12 @@ jobs:
           FILE: ${{ inputs.changelog-path }}
         run: |
           set -euo pipefail
+          # A non-release invocation (e.g. a workflow_dispatch dry-run) supplies
+          # no version — there is no release to gate, so pass cleanly.
+          if [ -z "$VERSION" ]; then
+            echo "changelog-check: no version supplied (non-release invocation) — skipping"
+            exit 0
+          fi
           v="${VERSION#v}"   # strip a leading v
           if [ ! -f "$FILE" ]; then
             echo "::error::changelog-check: $FILE not found"; exit 1
