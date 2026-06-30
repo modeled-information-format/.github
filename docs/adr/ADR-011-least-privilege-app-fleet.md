@@ -265,9 +265,9 @@ gate architecture) extends ADR-002 from "the gates that exist are reusable" to
 1. **Manifest is documentation, not runtime**: `auth/apps.json` is the source of
    truth and CI gate, but nothing reads it at mint time — each workflow still names
    its own variable/secret. The gate keeps the two in agreement.
-2. **Install scopes are per-App**: Each App is installed only on the repos that use
-   it, so adding a consumer means installing the App there as well as wiring the
-   workflow.
+2. **Install scope is org-wide**: Every App is installed on all org repos
+   (`install_on: all`); each workflow mints only the Apps its gates use, so adding a
+   consumer is just wiring the workflow, not a new install.
 
 ## Decision Outcome
 

@@ -89,7 +89,7 @@ A **patch** PR auto-approves + auto-merges once required checks are green; a
 
 ## Prerequisites
 
-The org automerge App (`modeled-information-format-ci`) must have `pull_requests: write`
+The org automerge App must have `pull_requests: write`
 and `contents: write` and be installed org-wide (it is — verify with
 `GET /app` via an App JWT if in doubt). Its approval is what satisfies branch
 protection's required review; do not lower `required_approving_review_count` to 0

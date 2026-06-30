@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/modeled-information-format/.github/auth/apps.schema.json",
   "title": "MIF org GitHub-App auth manifest",
-  "description": "Validates auth/apps.yml — the five least-privilege GitHub Apps and how workflows mint their tokens.",
+  "description": "Validates auth/apps.json — the five least-privilege GitHub Apps and how workflows mint their tokens.",
   "type": "object",
   "additionalProperties": false,
   "required": ["version", "mint_action", "identifier", "apps"],
