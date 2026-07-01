@@ -18,7 +18,7 @@ Every app's client-id lives in an org **variable** and its private key in an org
 | `catalog` | MIF Catalog | `Iv23liSw92oSTGWAOCGO` | `4187002` | `CATALOG_CLIENT_APP_ID` | `CATALOG_CLIENT_APP_PRIVATE_KEY` |
 | `pages` | MIF Pages | `Iv23liT9K2pQNdziydw4` | `4187014` | `PAGES_CLIENT_APP_ID` | `PAGES_CLIENT_APP_PRIVATE_KEY` |
 | `automerge` | MIF Automerge | `Iv23li1wVKsTbJ0tVv2d` | `4187029` | `AUTOMERGE_CLIENT_APP_ID` | `AUTOMERGE_CLIENT_APP_PRIVATE_KEY` |
-| `release` | MIF Release | `Iv23lii4nELn3fIt6FsT` | | `RELEASE_CLIENT_APP_ID` | `RELEASE_CLIENT_APP_PRIVATE_KEY` |
+| `release` | MIF Release | `Iv23lii4nELn3fIt6FsT` | n/a | `RELEASE_CLIENT_APP_ID` | `RELEASE_CLIENT_APP_PRIVATE_KEY` |
 
 ## Common configuration
 

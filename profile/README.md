@@ -105,10 +105,10 @@ GitHub Apps**, each scoped to one job — no single key carries the whole automa
 surface ([ADR-011](https://github.com/modeled-information-format/.github/blob/main/docs/adr/ADR-011-least-privilege-app-fleet.md)):
 
 [![app: ci](https://img.shields.io/badge/app-ci-34D3E8?logo=github&logoColor=white)](https://github.com/modeled-information-format/.github/blob/main/docs/adr/ADR-011-least-privilege-app-fleet.md)
-[![app: catalog](https://img.shields.io/badge/app-catalog-F5B642?logo=github&logoColor=white)](https://github.com/modeled-information-format/.github/blob/main/docs/adr/ADR-011-least-privilege-app-fleet.md)
-[![app: pages](https://img.shields.io/badge/app-pages-F5B642?logo=github&logoColor=white)](https://github.com/modeled-information-format/.github/blob/main/docs/adr/ADR-011-least-privilege-app-fleet.md)
+[![app: catalog](https://img.shields.io/badge/app-catalog-A371F7?logo=github&logoColor=white)](https://github.com/modeled-information-format/.github/blob/main/docs/adr/ADR-011-least-privilege-app-fleet.md)
+[![app: pages](https://img.shields.io/badge/app-pages-3FB950?logo=github&logoColor=white)](https://github.com/modeled-information-format/.github/blob/main/docs/adr/ADR-011-least-privilege-app-fleet.md)
 [![app: automerge](https://img.shields.io/badge/app-automerge-F5B642?logo=github&logoColor=white)](https://github.com/modeled-information-format/.github/blob/main/docs/adr/ADR-011-least-privilege-app-fleet.md)
-[![app: release](https://img.shields.io/badge/app-release-F5B642?logo=github&logoColor=white)](https://github.com/modeled-information-format/.github/blob/main/docs/adr/ADR-011-least-privilege-app-fleet.md)
+[![app: release](https://img.shields.io/badge/app-release-F2557D?logo=github&logoColor=white)](https://github.com/modeled-information-format/.github/blob/main/docs/adr/ADR-011-least-privilege-app-fleet.md)
 
 ---
 
