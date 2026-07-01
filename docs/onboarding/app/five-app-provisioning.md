@@ -1,261 +1,141 @@
-# Five-App Fleet — Provisioning Guide
+# Five-App Fleet — Reference
 
-How to create and provision the five least-privilege GitHub Apps that org
-workflows authenticate as. Governed by [ADR-011](../../adr/ADR-011-least-privilege-app-fleet.md);
-the machine-readable source of truth is [`auth/apps.json`](../../../auth/apps.json).
-
-Each app mints short-lived installation tokens via SHA-pinned
+The org's automation authenticates as **five least-privilege GitHub Apps**. Each
+mints short-lived installation tokens via SHA-pinned
 `actions/create-github-app-token` using its OAuth **client-id** (the deprecated
-`app-id` is retired). Per app: the client-id lives in an org **variable**
-`<ROLE>_CLIENT_APP_ID`; the private key in an org **secret**
-`<ROLE>_CLIENT_APP_PRIVATE_KEY`; both at visibility **All**.
+numeric `app-id` is retired as an auth input). Governed by
+[ADR-011](../../adr/ADR-011-least-privilege-app-fleet.md); the machine-readable
+source of truth is [`auth/apps.json`](../../../auth/apps.json).
 
-> Every value below is in its own code block — use the copy button. Repository
-> permissions are toggles in the form, not pasteable strings, so they stay as a list.
+## The fleet
 
-## Common settings (identical for all five)
+Every app's client-id lives in an org **variable** and its private key in an org
+**secret**, both at visibility **All**.
 
-Set these on every app in the **Register new GitHub App** form
-(`https://github.com/organizations/modeled-information-format/settings/apps/new`):
+| Role | App name | Client ID | App ID | Variable (client-id) | Secret (private key) |
+| --- | --- | --- | --- | --- | --- |
+| `ci` | MIF CI | `Iv23liwIhF5oJTKzV2LP` | `4186958` | `CI_CLIENT_APP_ID` | `CI_CLIENT_APP_PRIVATE_KEY` |
+| `catalog` | MIF Catalog | `Iv23liSw92oSTGWAOCGO` | `4187002` | `CATALOG_CLIENT_APP_ID` | `CATALOG_CLIENT_APP_PRIVATE_KEY` |
+| `pages` | MIF Pages | `Iv23liT9K2pQNdziydw4` | `4187014` | `PAGES_CLIENT_APP_ID` | `PAGES_CLIENT_APP_PRIVATE_KEY` |
+| `automerge` | MIF Automerge | `Iv23li1wVKsTbJ0tVv2d` | `4187029` | `AUTOMERGE_CLIENT_APP_ID` | `AUTOMERGE_CLIENT_APP_PRIVATE_KEY` |
+| `release` | MIF Release | `Iv23lii4nELn3fIt6FsT` | | `RELEASE_CLIENT_APP_ID` | `RELEASE_CLIENT_APP_PRIVATE_KEY` |
 
-**Homepage URL** (same for all five):
+## Common configuration
 
-```text
-https://mif-spec.dev
-```
+Identical across all five apps:
 
-- Callback URL — *leave blank*
-- Setup URL — *leave blank*
-- Webhook -> Active — **Unchecked** (token-minting identity, not webhook-driven)
-- Webhook URL — *blank (allowed once Active is off)*
-- Organization permissions — None (all "No access")
-- Account permissions — None (all "No access")
-- Subscribe to events — None
-- Where can this app be installed? — **Only on this account** (`modeled-information-format`)
+| Setting | Value |
+| --- | --- |
+| Homepage URL | `https://mif-spec.dev` |
+| Callback URL | blank |
+| Setup URL | blank |
+| Webhook | inactive — a token-minting identity, not webhook-driven |
+| Organization permissions | none (all No access) |
+| Account permissions | none (all No access) |
+| Event subscriptions | none |
+| Installation | only `modeled-information-format`, all repositories |
+| `Metadata` | Read-only (set automatically by GitHub) |
 
-Every repository permission not listed for an app stays **No access**.
-`Metadata: Read-only` is set automatically by GitHub.
+Every repository permission not listed for an app below is **No access**.
 
-After creating each app:
+## Repository permissions
 
-1. **Generate a private key** (`.pem`) and store it in the app's org secret.
-2. **Copy the Client ID** (`Iv23...`) and store it in the app's org variable.
-3. **Install** the app on **All repositories** in the org.
+### `ci` — CI / OpenSSF Scorecard identity
 
----
+Read-only cross-repo CI, primarily OpenSSF Scorecard reading branch protection.
+`Administration: Read-only` is what lets Scorecard score Branch-Protection from the
+real settings.
 
-## 1. `ci` — CI / OpenSSF Scorecard identity
+| Permission | Level |
+| --- | --- |
+| Administration | Read-only |
+| Checks | Read-only |
+| Contents | Read-only |
+| Issues | Read-only |
+| Pull requests | Read-only |
+| Actions | Read-only |
 
-App name:
+### `catalog` — marketplace catalog updates
 
-```text
-MIF CI
-```
+Re-pins external plugin entries in the Claude Code plugin marketplace catalog to
+their latest attested release and opens auto-merge PRs.
 
-Description:
+| Permission | Level |
+| --- | --- |
+| Contents | Read and write |
+| Pull requests | Read and write |
+| Actions | Read and write |
 
-```text
-Org CI identity for the modeled-information-format org. Mints short-lived installation tokens for read-only cross-repo CI — primarily OpenSSF Scorecard reading branch protection. Least-privilege; governed by ADR-011.
-```
+### `pages` — cross-repo org Pages deploy
 
-Repository permissions (set in the form):
+Cross-repo GitHub Pages deploy/notify: docs-source repos build, then notify the
+`github.io` assembly repo to compose and deploy.
 
-- Administration: Read-only
-- Checks: Read-only
-- Contents: Read-only
-- Issues: Read-only
-- Pull requests: Read-only
-- Actions: Read-only
+| Permission | Level |
+| --- | --- |
+| Contents | Read and write |
+| Pages | Read and write |
+| Actions | Read and write |
 
-`Administration: Read-only` is what lets Scorecard score Branch-Protection from real settings.
+### `automerge` — Dependabot auto-merge
 
-Org variable (store the Client ID here):
+Approves and enables auto-merge on Dependabot PRs (Dependabot cannot approve its
+own PR).
 
-```text
-CI_CLIENT_APP_ID
-```
+| Permission | Level |
+| --- | --- |
+| Contents | Read and write |
+| Pull requests | Read and write |
 
-Org secret (store the private key here):
+### `release` — release publish / contents
 
-```text
-CI_CLIENT_APP_PRIVATE_KEY
-```
+Authenticates the `gh release` / contents-write steps in release workflows. Keyless
+OIDC attestation is unchanged and does not use this app.
 
----
+| Permission | Level |
+| --- | --- |
+| Contents | Read and write |
+| Packages | Read and write (only where the repo publishes packages) |
 
-## 2. `catalog` — marketplace catalog updates
+## Icon colors
 
-App name:
+One accent per role on the MIF dark field (`ci` and `automerge` reuse the brand
+accents); distinct in hue and lightness so a one-letter glyph reads on a dark
+avatar and the set stays colorblind-distinguishable.
 
-```text
-MIF Catalog
-```
-
-Description:
-
-```text
-Updates the modeled-information-format Claude Code plugin marketplace catalog — re-pins external plugin entries to their latest attested release and opens auto-merge PRs. Least-privilege; governed by ADR-011.
-```
-
-Repository permissions (set in the form):
-
-- Contents: Read and write
-- Pull requests: Read and write
-- Actions: Read and write
-
-Org variable:
-
-```text
-CATALOG_CLIENT_APP_ID
-```
-
-Org secret:
-
-```text
-CATALOG_CLIENT_APP_PRIVATE_KEY
-```
-
----
-
-## 3. `pages` — cross-repo org Pages deploy
-
-App name:
-
-```text
-MIF Pages
-```
-
-Description:
-
-```text
-Cross-repo GitHub Pages deploy/notify for the modeled-information-format org — docs-source repos build, then notify the github.io assembly repo to compose and deploy. Least-privilege; governed by ADR-011.
-```
-
-Repository permissions (set in the form):
-
-- Contents: Read and write
-- Pages: Read and write
-- Actions: Read and write
-
-Org variable:
-
-```text
-PAGES_CLIENT_APP_ID
-```
-
-Org secret:
-
-```text
-PAGES_CLIENT_APP_PRIVATE_KEY
-```
-
----
-
-## 4. `automerge` — Dependabot auto-merge
-
-App name:
-
-```text
-MIF Automerge
-```
-
-Description:
-
-```text
-Approves and enables auto-merge on Dependabot PRs across the modeled-information-format org (Dependabot cannot approve its own PR). Least-privilege; governed by ADR-011.
-```
-
-Repository permissions (set in the form):
-
-- Contents: Read and write
-- Pull requests: Read and write
-
-Org variable:
-
-```text
-AUTOMERGE_CLIENT_APP_ID
-```
-
-Org secret:
-
-```text
-AUTOMERGE_CLIENT_APP_PRIVATE_KEY
-```
-
----
-
-## 5. `release` — release publish / contents
-
-App name:
-
-```text
-MIF Release
-```
-
-Description:
-
-```text
-Authenticates the gh release / contents-write steps in release workflows across the modeled-information-format org. Keyless OIDC attestation is unchanged. Least-privilege; governed by ADR-011.
-```
-
-Repository permissions (set in the form):
-
-- Contents: Read and write
-- Packages: Read and write (only where the repo publishes packages)
-
-Org variable:
-
-```text
-RELEASE_CLIENT_APP_ID
-```
-
-Org secret:
-
-```text
-RELEASE_CLIENT_APP_PRIVATE_KEY
-```
-
----
-
-## Credential name summary
-
-| App | Variable (Client ID) | Secret (Private key) |
+| App | Hex | Rationale |
 | --- | --- | --- |
-| `ci` | `CI_CLIENT_APP_ID` | `CI_CLIENT_APP_PRIVATE_KEY` |
-| `catalog` | `CATALOG_CLIENT_APP_ID` | `CATALOG_CLIENT_APP_PRIVATE_KEY` |
-| `pages` | `PAGES_CLIENT_APP_ID` | `PAGES_CLIENT_APP_PRIVATE_KEY` |
-| `automerge` | `AUTOMERGE_CLIENT_APP_ID` | `AUTOMERGE_CLIENT_APP_PRIVATE_KEY` |
-| `release` | `RELEASE_CLIENT_APP_ID` | `RELEASE_CLIENT_APP_PRIVATE_KEY` |
+| `ci` | `#34D3E8` | machine-cyan, a read-only machine identity |
+| `catalog` | `#A371F7` | violet, marketplace / catalog |
+| `pages` | `#3FB950` | green, deploy / live site |
+| `automerge` | `#F5B642` | human-amber, the approval Dependabot cannot give |
+| `release` | `#F2557D` | rose-red, ship / cut a release |
 
-## Provisioning the org variable + secret
+## Credential provisioning
 
-`gh secret/variable set --org` does not work for this org from the CLI; use the
-REST API with the org-admin token. The **variable** holds the Client ID
-(`Iv23...` — not the numeric app id); the **secret** holds the private key,
+`gh secret/variable set --org` does not work for this org; credentials are set via
+the REST API with an org-admin token. The **variable** holds the client-id
+(`Iv23...`, not the numeric app id); the **secret** holds the private key,
 libsodium-sealed against the org public key.
 
 ```bash
 TOK=<org-admin token>
 
-# 1. Variable (Client ID), visibility all
+# Variable (client-id), visibility all:
 curl -sS -X POST -H "Authorization: Bearer $TOK" -H "X-GitHub-Api-Version: 2022-11-28" \
   https://api.github.com/orgs/modeled-information-format/actions/variables \
   -d '{"name":"CI_CLIENT_APP_ID","value":"Iv23xxxxxxxxxxxx","visibility":"all"}'
 
-# 2. Secret (private key): GET the org public key, sealed-box encrypt the PEM with
-#    that key, then PUT { encrypted_value, key_id, visibility:"all" } to
-#    /orgs/modeled-information-format/actions/secrets/CI_CLIENT_APP_PRIVATE_KEY
+# Secret (private key): GET the org public key, sealed-box encrypt the PEM against
+# it, then PUT { encrypted_value, key_id, visibility: "all" } to
+# /orgs/modeled-information-format/actions/secrets/CI_CLIENT_APP_PRIVATE_KEY
 ```
 
-Repeat for all five `<ROLE>_CLIENT_APP_ID` / `<ROLE>_CLIENT_APP_PRIVATE_KEY` pairs.
+The same pair is set for every `<ROLE>_CLIENT_APP_ID` / `<ROLE>_CLIENT_APP_PRIVATE_KEY`.
 
-## After provisioning
+## Related
 
-- The auth refactor PRs (epic `#37`) go green: each workflow mints its app token
-  via `client-id`.
-- Verify a release still attests and verifies (`gh attestation verify`) — the
-  `release` app only authenticates the publish step; the keyless OIDC attestation
-  identity is unchanged.
-- The manifest gate (`.github/workflows/app-manifest-validate.yml`) keeps
-  `auth/apps.json` consistent (SHA pin, role/name match, uniqueness, permission
-  enums, consumer paths).
+- [ADR-011](../../adr/ADR-011-least-privilege-app-fleet.md) — the decision record.
+- [`auth/apps.json`](../../../auth/apps.json) — the machine-readable source of truth.
+- `.github/workflows/app-manifest-validate.yml` — the gate that keeps `auth/apps.json`
+  consistent (SHA pin, role/name match, uniqueness, permission enums, consumer paths).
