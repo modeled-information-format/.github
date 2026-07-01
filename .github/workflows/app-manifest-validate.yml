@@ -3,7 +3,7 @@ name: app-manifest-validate
 
 # Validate auth/apps.json — the org GitHub-App auth manifest — with inline jq
 # cross-checks: SHA-pinned mint action, <ROLE>_CLIENT_APP_* role/name consistency,
-# credential-name uniqueness, required fields, permission enums (read|write|admin),
+# credential-name uniqueness, required fields, permission enums (read|write),
 # no unknown keys, install_on ('all'|array), and consumer .yml paths. Fail-closed.
 # auth/apps.schema.json documents the same shape declaratively (editor hint via the
 # manifest's $schema ref); it is not executed here — the jq checks are the gate.
@@ -54,8 +54,8 @@ jobs:
                   | if ($e.value|has($k)) then empty else "app \($e.key): missing \($k)" end),
                  ($e.value | keys[] as $k | select((["purpose","id_variable","key_secret","permissions","install_on","consumers"] | index($k)) == null)
                   | "app \($e.key): unknown key \($k)"),
-                 (($e.value.permissions // {}) | to_entries[] | select((.value | IN("read","write","admin")) | not)
-                  | "app \($e.key): permission \(.key)=\(.value|tostring) not in read|write|admin"),
+                 (($e.value.permissions // {}) | to_entries[] | select((.value | IN("read","write")) | not)
+                  | "app \($e.key): permission \(.key)=\(.value|tostring) not in read|write"),
                  (if ($e.value.install_on | type) == "string" and $e.value.install_on != "all"
                   then "app \($e.key): install_on string must be \"all\"" else empty end),
                  (($e.value.consumers // [])[] | select(test("^[^/]+/\\.github/workflows/[^/]+\\.ya?ml$") | not)

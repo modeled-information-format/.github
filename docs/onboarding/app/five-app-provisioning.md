@@ -113,8 +113,9 @@ avatar and the set stays colorblind-distinguishable.
 
 ## Credential provisioning
 
-`gh secret/variable set --org` does not work for this org; credentials are set via
-the REST API with an org-admin token. The **variable** holds the client-id
+`gh secret/variable set --org` is not used here — the org-admin token is a
+fine-grained PAT the CLI's org path does not accept — so credentials are set via
+the REST API with that token. The **variable** holds the client-id
 (`Iv23...`, not the numeric app id); the **secret** holds the private key,
 libsodium-sealed against the org public key.
 

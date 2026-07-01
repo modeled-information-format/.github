@@ -48,7 +48,7 @@
           "minProperties": 1,
           "additionalProperties": {
             "type": "string",
-            "enum": ["read", "write", "admin"]
+            "enum": ["read", "write"]
           }
         },
         "install_on": {
