@@ -49,7 +49,7 @@ jobs:
                | (if $e.value.id_variable != "\($r)_CLIENT_APP_ID"
                   then "app \($e.key): id_variable must be \($r)_CLIENT_APP_ID (got \($e.value.id_variable))" else empty end),
                  (if $e.value.key_secret != "\($r)_CLIENT_APP_PRIVATE_KEY"
-                  then "app \($e.key): key_secret must be \($r)_CLIENT_APP_PRIVATE_KEY" else empty end),
+                  then "app \($e.key): key_secret must be \($r)_CLIENT_APP_PRIVATE_KEY (got \($e.value.key_secret))" else empty end),
                  (["purpose","permissions","install_on","consumers"][] as $k
                   | if ($e.value|has($k)) then empty else "app \($e.key): missing \($k)" end),
                  ($e.value | keys[] as $k | select((["purpose","id_variable","key_secret","permissions","install_on","consumers"] | index($k)) == null)
