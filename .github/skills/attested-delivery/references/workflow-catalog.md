@@ -1,4 +1,4 @@
-# Workflow catalog — the 20 central reusable workflows
+# Workflow catalog — the 23 central reusable workflows
 
 This is the deliberate, named index of every reusable workflow the
 attested-delivery plugin ships. Each is a **bundled plugin resource**: it lives
@@ -361,3 +361,16 @@ package) with Sigstore cosign keyless signing, and verify the bundle back in-run
 - **Predicate:** none — this is a blob signer, not a SARIF gate. The Fulcio cert SAN is
   this signer workflow; verify with `cosign verify-blob --certificate-identity-regexp`.
 - **Allow-list:** **`sigstore/cosign-installer@*`**.
+
+### `${CLAUDE_PLUGIN_ROOT}/workflows/app-manifest-validate.yml` — org App auth-manifest validation
+Fail-closed validation of `auth/apps.json` (the org GitHub-App auth manifest, ADR-011) via
+inline `jq` cross-checks: SHA-pinned mint action, `<ROLE>_CLIENT_APP_*` role/name
+consistency, credential-name uniqueness, required fields, permission enums (`read`|`write`),
+`install_on` shape, no unknown keys, and consumer `.yml` paths. Runs on `auth/**` changes in
+the `.github` repo and is exposed via `workflow_call` so another repo can validate a vendored
+copy of the manifest.
+
+- **Inputs:** none (`workflow_call: {}`). **Secrets:** none. **Outputs:** none.
+- **Permissions:** job `validate` needs `contents: read`.
+- **Predicate:** none — a manifest-integrity gate, not a SARIF/attestation seam.
+- **Allow-list:** none (GitHub-created `actions/checkout` only).
