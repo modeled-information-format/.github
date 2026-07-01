@@ -48,7 +48,9 @@
       "install_on": "all",
       "consumers": [
         "modeled-information-format.github.io/.github/workflows/deploy.yml",
-        "research-harness-template/.github/workflows/docs.yml"
+        "research-harness-template/.github/workflows/docs.yml",
+        "ontologies/.github/workflows/release.yml",
+        "MIF/.github/workflows/deploy.yml"
       ]
     },
     "automerge": {
