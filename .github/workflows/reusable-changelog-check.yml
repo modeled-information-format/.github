@@ -59,18 +59,25 @@ jobs:
           if [ ! -f "$FILE" ]; then
             echo "::error::changelog-check: $FILE not found"; exit 1
           fi
-          if ! grep -qE "^## \[${v//./\\.}\]" "$FILE"; then
+          # One awk pass, FIXED-STRING header match (index == 1) so the version is
+          # matched literally — SemVer metacharacters like the '+' in build
+          # metadata are not treated as a regex. Existence and body extraction
+          # stay consistent because they come from the same pass; awk exits 3 when
+          # the header is absent.
+          section="$(awk -v hdr="## [$v]" '
+            index($0, hdr) == 1        { found=1; insec=1; next }
+            insec && index($0, "## [") == 1 { insec=0 }
+            insec                      { print }
+            END                        { if (!found) exit 3 }
+          ' "$FILE")" || {
             echo "::error::changelog-check: no '## [$v]' section in $FILE — add a dated entry per Keep a Changelog before releasing"
             exit 1
-          fi
-          # Extract the section body (between this header and the next '## [').
-          section="$(awk -v ver="$v" '
-            $0 ~ ("^## \\[" ver "\\]") {f=1; next}
-            f && /^## \[/ {exit}
-            f {print}
-          ' "$FILE")"
-          # Non-empty = at least one bullet or prose line (ignore blanks and lone "### " group headers).
-          if ! printf '%s\n' "$section" | grep -qE '^[-*] |^[A-Za-z0-9]'; then
+          }
+          # Non-empty = at least one non-blank line that is not a markdown header.
+          # This accepts real content in any form: bullets at any indent, prose,
+          # '**Breaking:** ...' bold lines, and link-reference lines — it only
+          # rejects a section that is blank or nothing but '###' group headers.
+          if ! printf '%s\n' "$section" | grep -vE '^[[:space:]]*#' | grep -qE '[^[:space:]]'; then
             echo "::error::changelog-check: the '## [$v]' section in $FILE is empty — fill in the Added/Changed/Fixed entries before releasing"
             exit 1
           fi
