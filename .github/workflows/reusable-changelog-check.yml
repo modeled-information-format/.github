@@ -64,15 +64,23 @@ jobs:
           # metadata are not treated as a regex. Existence and body extraction
           # stay consistent because they come from the same pass; awk exits 3 when
           # the header is absent.
+          # Capture awk's exit status explicitly: 3 means the header is absent;
+          # any other non-zero status is a real awk failure (e.g. the file could
+          # not be read) and must surface as such, not be misreported as a
+          # missing section.
           section="$(awk -v hdr="## [$v]" '
             index($0, hdr) == 1        { found=1; insec=1; next }
             insec && index($0, "## [") == 1 { insec=0 }
             insec                      { print }
             END                        { if (!found) exit 3 }
-          ' "$FILE")" || {
+          ' "$FILE")" && rc=0 || rc=$?
+          if [ "${rc:-0}" -eq 3 ]; then
             echo "::error::changelog-check: no '## [$v]' section in $FILE — add a dated entry per Keep a Changelog before releasing"
             exit 1
-          }
+          elif [ "${rc:-0}" -ne 0 ]; then
+            echo "::error::changelog-check: awk failed (exit ${rc}) while reading $FILE"
+            exit 1
+          fi
           # Non-empty = at least one non-blank line that is not a markdown header.
           # This accepts real content in any form: bullets at any indent, prose,
           # '**Breaking:** ...' bold lines, and link-reference lines — it only
