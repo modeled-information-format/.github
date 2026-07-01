@@ -69,9 +69,14 @@ deprecated). Provision both org-wide (visibility `all`). `gh variable/secret set
 ```bash
 TOK=<org-admin token>
 # App client id (public identifier, e.g. Iv23li...) — org variable, visibility all
-curl -sS -X POST -H "Authorization: Bearer $TOK" -H "X-GitHub-Api-Version: 2022-11-28" \
-  https://api.github.com/orgs/modeled-information-format/actions/variables \
-  -d '{"name":"CATALOG_CLIENT_APP_ID","value":"Iv23li...","visibility":"all"}'
+# Idempotent: update if it exists, else create.
+NAME=CATALOG_CLIENT_APP_ID VALUE=Iv23li...
+curl -fsS -X PATCH -H "Authorization: Bearer $TOK" -H "X-GitHub-Api-Version: 2022-11-28" \
+  "https://api.github.com/orgs/modeled-information-format/actions/variables/$NAME" \
+  -d "{\"value\":\"$VALUE\",\"visibility\":\"all\"}" \
+  || curl -fsS -X POST -H "Authorization: Bearer $TOK" -H "X-GitHub-Api-Version: 2022-11-28" \
+    https://api.github.com/orgs/modeled-information-format/actions/variables \
+    -d "{\"name\":\"$NAME\",\"value\":\"$VALUE\",\"visibility\":\"all\"}"
 
 # App private key -> org secret CATALOG_CLIENT_APP_PRIVATE_KEY: GET the org public key,
 # sealed-box encrypt the .pem, PUT { encrypted_value, key_id, visibility:"all" }.

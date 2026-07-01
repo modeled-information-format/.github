@@ -122,10 +122,14 @@ libsodium-sealed against the org public key.
 ```bash
 TOK=<org-admin token>
 
-# Variable (client-id), visibility all:
-curl -sS -X POST -H "Authorization: Bearer $TOK" -H "X-GitHub-Api-Version: 2022-11-28" \
-  https://api.github.com/orgs/modeled-information-format/actions/variables \
-  -d '{"name":"CI_CLIENT_APP_ID","value":"Iv23xxxxxxxxxxxx","visibility":"all"}'
+# Variable (client-id), visibility all — idempotent (update if it exists, else create):
+NAME=CI_CLIENT_APP_ID VALUE=Iv23xxxxxxxxxxxx
+curl -fsS -X PATCH -H "Authorization: Bearer $TOK" -H "X-GitHub-Api-Version: 2022-11-28" \
+  "https://api.github.com/orgs/modeled-information-format/actions/variables/$NAME" \
+  -d "{\"value\":\"$VALUE\",\"visibility\":\"all\"}" \
+  || curl -fsS -X POST -H "Authorization: Bearer $TOK" -H "X-GitHub-Api-Version: 2022-11-28" \
+    https://api.github.com/orgs/modeled-information-format/actions/variables \
+    -d "{\"name\":\"$NAME\",\"value\":\"$VALUE\",\"visibility\":\"all\"}"
 
 # Secret (private key): GET the org public key, sealed-box encrypt the PEM against
 # it, then PUT { encrypted_value, key_id, visibility: "all" } to
