@@ -1,0 +1,69 @@
+---
+name: app-manifest-validate
+
+# Validate auth/apps.json — the org GitHub-App auth manifest — with inline jq
+# cross-checks: SHA-pinned mint action, <ROLE>_CLIENT_APP_* role/name consistency,
+# credential-name uniqueness, required fields, permission enums (read|write),
+# no unknown keys, install_on ('all'|array), and consumer .yml paths. Fail-closed.
+# auth/apps.schema.json documents the same shape declaratively (editor hint via the
+# manifest's $schema ref); it is not executed here — the jq checks are the gate.
+#
+# Runs on PRs and pushes that touch auth/**, and is exposed via workflow_call so
+# other repos could validate a vendored copy. Governed by ADR-011.
+
+on:
+  pull_request:
+    paths:
+      - 'auth/**'
+      - '.github/workflows/app-manifest-validate.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'auth/**'
+      - '.github/workflows/app-manifest-validate.yml'
+  workflow_call: {}
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: validate apps manifest
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Validate auth/apps.json (jq; pre-installed on the runner)
+        run: |
+          set -euo pipefail
+          errors=$(jq -r '
+            [
+              (if .version == 1 then empty else "version must be 1 (got \(.version|tostring))" end),
+              (if .identifier == "client-id" then empty else "identifier must be \"client-id\" (got \(.identifier|tostring))" end),
+              (keys[] as $k | select((["$schema","description","version","mint_action","identifier","apps"] | index($k)) == null)
+               | "unknown top-level key \($k)"),
+              (if (.mint_action | test("^actions/create-github-app-token@[0-9a-f]{40}$")) then empty
+               else "mint_action not SHA-pinned: \(.mint_action)" end),
+              (.apps | to_entries[] as $e | ($e.key | ascii_upcase | gsub("-";"_")) as $r
+               | (if $e.value.id_variable != "\($r)_CLIENT_APP_ID"
+                  then "app \($e.key): id_variable must be \($r)_CLIENT_APP_ID (got \($e.value.id_variable))" else empty end),
+                 (if $e.value.key_secret != "\($r)_CLIENT_APP_PRIVATE_KEY"
+                  then "app \($e.key): key_secret must be \($r)_CLIENT_APP_PRIVATE_KEY (got \($e.value.key_secret))" else empty end),
+                 (["purpose","permissions","install_on","consumers"][] as $k
+                  | if ($e.value|has($k)) then empty else "app \($e.key): missing \($k)" end),
+                 ($e.value | keys[] as $k | select((["purpose","id_variable","key_secret","permissions","install_on","consumers"] | index($k)) == null)
+                  | "app \($e.key): unknown key \($k)"),
+                 (($e.value.permissions // {}) | to_entries[] | select((.value | IN("read","write")) | not)
+                  | "app \($e.key): permission \(.key)=\(.value|tostring) not in read|write"),
+                 (if ($e.value.install_on | type) == "string" and $e.value.install_on != "all"
+                  then "app \($e.key): install_on string must be \"all\"" else empty end),
+                 (($e.value.consumers // [])[] | select(test("^[^/]+/\\.github/workflows/[^/]+\\.ya?ml$") | not)
+                  | "app \($e.key): consumer \(.) is not a <repo>/.github/workflows/<file>.yml path")),
+              (.apps | [to_entries[].value.id_variable] | group_by(.)[] | select(length>1) | "duplicate id_variable: \(.[0])"),
+              (.apps | [to_entries[].value.key_secret] | group_by(.)[] | select(length>1) | "duplicate key_secret: \(.[0])")
+            ] | .[]' auth/apps.json)
+          if [ -n "$errors" ]; then
+            echo "apps.json: FAIL"; echo "$errors" | awk '{print "  - " $0}'; exit 1
+          fi
+          echo "apps.json: PASS — $(jq '.apps | length' auth/apps.json) apps verified."

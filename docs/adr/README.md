@@ -1,4 +1,7 @@
 ---
+id: org-adr-index
+type: semantic
+created: 2026-06-29T00:00:00Z
 diataxis_type: reference
 ---
 
@@ -30,9 +33,10 @@ governs.
 | [ADR-005](ADR-005-signing-attestation-verification.md) | Artifact Signing, SLSA Attestation & Fail-Closed Verification | Accepted | Release artifacts are signed and attested (cosign keyless via Sigstore, SLSA provenance, SBOM, scan verdicts) and verified fail-closed in-run before publication, with independent re-verification. |
 | [ADR-006](ADR-006-dast-and-load-testing.md) | DAST and Load Testing (ZAP + k6), Opt-In Schedule/Dispatch-Driven | Accepted | Dynamic analysis (OWASP ZAP) and load testing (k6) run as opt-in, schedule/dispatch-driven reusable workflows — not PR gates — because they need a live target; findings surface as reports. |
 | [ADR-007](ADR-007-scorecard-posture.md) | OpenSSF Scorecard Posture Assessment | Accepted | The org runs OpenSSF Scorecard as a reusable workflow for repository security-posture assessment, with results published. |
-| [ADR-008](ADR-008-github-app-ci-identity.md) | GitHub App CI Identity (Token-Minting App vs PAT) | Accepted | Org workflows authenticate as the dedicated `modeled-information-format-ci` GitHub App via short-lived minted tokens, rather than a PAT; artifact signing instead uses the run's ephemeral `GITHUB_TOKEN` + OIDC. |
+| [ADR-008](ADR-008-github-app-ci-identity.md) | GitHub App CI Identity (Token-Minting App vs PAT) | Superseded by [ADR-011](ADR-011-least-privilege-app-fleet.md) | Org workflows authenticate as the dedicated `modeled-information-format-ci` GitHub App via short-lived minted tokens, rather than a PAT; artifact signing instead uses the run's ephemeral `GITHUB_TOKEN` + OIDC. |
 | [ADR-009](ADR-009-branch-protection-standardization.md) | Branch-Protection Standardization | Accepted | Every repo's default branch gets one identical protection posture via an idempotent declarative script — required status checks, reviews, and related rules — codified as a runbook. |
 | [ADR-010](ADR-010-plugin-catalog-hub.md) | Plugin Catalog Hub and Manifest Review | Accepted | The org governs Claude Code plugin marketplaces with a verify-first catalog-update hub, a soft-fail manifest-review gate (SHA pins, reserved names, required fields → SARIF), and a hard-fail catalog-sync check, scoped by a deny-list. |
+| [ADR-011](ADR-011-least-privilege-app-fleet.md) | Least-Privilege App Fleet and Org-Wide Standard Gate Suite | Accepted | Supersedes ADR-008: the single CI identity becomes five least-privilege Apps (ci, catalog, pages, automerge, release) installed org-wide, minted via the OAuth client-id under one `<ROLE>_CLIENT_APP_*` scheme in a jq-gated `auth/apps.json`; every repo standardizes on the full reusable gate suite on these shared identities. |
 
 ## Creating new ADRs
 

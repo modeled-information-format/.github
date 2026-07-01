@@ -10,7 +10,7 @@ tags:
   - tokens
   - security
   - oidc
-status: accepted
+status: superseded
 created: 2026-06-29
 updated: 2026-06-29
 author: MIF Maintainers
@@ -27,13 +27,18 @@ audience:
 related:
   - ADR-002-reusable-quality-gate-architecture.md
   - ADR-009-branch-protection-standardization.md
+  - ADR-011-least-privilege-app-fleet.md
 ---
 
 # ADR-008: GitHub App CI Identity (Token-Minting App vs PAT)
 
 ## Status
 
-Accepted
+Superseded by [ADR-011](ADR-011-least-privilege-app-fleet.md) — the single
+`modeled-information-format-ci` identity is replaced by a five-App least-privilege
+fleet. The App-over-PAT, short-lived-token, and separate-keyless-signing rationale
+below carries forward unchanged; only the identity count, credential naming, and
+the central manifest are new.
 
 ## Context
 

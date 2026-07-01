@@ -26,6 +26,7 @@ audience:
   - maintainers
 related:
   - ADR-002-reusable-quality-gate-architecture.md
+  - ADR-011-least-privilege-app-fleet.md
 ---
 
 # ADR-010: Plugin Catalog Hub and Manifest Review

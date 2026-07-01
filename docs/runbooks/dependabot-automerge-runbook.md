@@ -26,7 +26,7 @@ and all three must be addressed together (diagnosed on `.github` #18–#21):
   `docs/onboarding/org/dependabot-automerge-settings.sh` (enables
   `allow_auto_merge`, then delegates to `branch-protection.sh`).
 - Branch protection itself: [branch-protection-runbook.md](branch-protection-runbook.md).
-- The org CI App identity (`vars.MIF_CI_CLIENT_APP_ID`) — see `RUNBOOK.md`.
+- The org automerge App identity (`vars.AUTOMERGE_CLIENT_APP_ID`) — see `RUNBOOK.md`.
 
 ## How it works
 
@@ -34,7 +34,7 @@ and all three must be addressed together (diagnosed on `.github` #18–#21):
 | --- | --- | --- |
 | Scope | **patch only** | Lowest risk; minor/major keep a human in the loop. |
 | Gate | `dependabot/fetch-metadata` | Reads the PR's semver `update-type`. |
-| Approver | **org CI App** | Dependabot can't approve its own PR; the App's review satisfies the required 1 review. |
+| Approver | **org automerge App** | Dependabot can't approve its own PR; the App's review satisfies the required 1 review. |
 | Trigger | `pull_request_target` | Dependabot's own `pull_request` runs get a read-only token with **no secrets**, so the App key is unreachable there. |
 | Merge | `gh pr merge --auto --squash` | Waits for required checks + up-to-date branch, then merges. |
 
@@ -55,7 +55,7 @@ SHA-pinned and are still gated by `pin-check`; auto-merge does not relax that.
 #      if: github.actor == 'dependabot[bot]'
 #      uses: modeled-information-format/.github/.github/workflows/reusable-dependabot-automerge.yml@<sha>
 #      with: { update-types: patch }
-#      secrets: { app-private-key: ${{ secrets.MIF_CI_CLIENT_APP_PRIVATE_KEY }} }
+#      secrets: { app-private-key: ${{ secrets.AUTOMERGE_CLIENT_APP_PRIVATE_KEY }} }
 
 # 2. Apply the settings (allow_auto_merge + branch protection, with the repo's contexts):
 GH_TOKEN=<admin-token> \
@@ -89,8 +89,10 @@ A **patch** PR auto-approves + auto-merges once required checks are green; a
 
 ## Prerequisites
 
-The org CI App (`modeled-information-format-ci`) must have `pull_requests: write`
+The org automerge App must have `pull_requests: write`
 and `contents: write` and be installed org-wide (it is — verify with
-`GET /app` via an App JWT if in doubt). Its approval is what satisfies branch
+`GET /orgs/modeled-information-format/installation` via an App JWT if in doubt;
+its `repository_selection` is `all` for an org-wide install). Its approval is what
+satisfies branch
 protection's required review; do not lower `required_approving_review_count` to 0
 to work around a missing App.

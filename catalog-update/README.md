@@ -59,28 +59,36 @@ target's `catalog-admission` so the hub and the gate agree.
 
 ## Owner setup
 
-The hub reads the `modeled-information-format-ci` App's **client id** from an **org variable**
-and its private key from an **org secret** (the client id is a public identifier, the
-key is not). `actions/create-github-app-token` takes `client-id` (the `app-id` input
-is deprecated). Scope both to the `.github` repo, where the hub runs:
+The hub reads the `catalog` App's **client id** from an **org variable** and its
+private key from an **org secret** (the client id is a public identifier, the key is
+not). `actions/create-github-app-token` takes `client-id` (the `app-id` input is
+deprecated). Provision both org-wide (visibility `all`). `gh variable/secret set
+--org` does not work for this org — use the REST API with the org-admin token (see
+[the five-app provisioning guide](../docs/onboarding/app/five-app-provisioning.md)):
 
 ```bash
-# App client id (public identifier, e.g. Iv23li...) — org variable
-gh variable set CATALOG_UPDATER_APP_CLIENT_ID --org modeled-information-format \
-  --visibility selected --repos .github --body "<CLIENT_ID>"
+TOK=<org-admin token>
+# App client id (public identifier, e.g. Iv23li...) — org variable, visibility all
+# Idempotent: update if it exists, else create.
+NAME=CATALOG_CLIENT_APP_ID VALUE=Iv23li...
+curl -fsS -X PATCH -H "Authorization: Bearer $TOK" -H "X-GitHub-Api-Version: 2022-11-28" \
+  "https://api.github.com/orgs/modeled-information-format/actions/variables/$NAME" \
+  -d "{\"value\":\"$VALUE\",\"visibility\":\"all\"}" \
+  || curl -fsS -X POST -H "Authorization: Bearer $TOK" -H "X-GitHub-Api-Version: 2022-11-28" \
+    https://api.github.com/orgs/modeled-information-format/actions/variables \
+    -d "{\"name\":\"$NAME\",\"value\":\"$VALUE\",\"visibility\":\"all\"}"
 
-# App private key — org secret (reads the .pem; value never printed)
-gh secret set CATALOG_UPDATER_APP_PRIVATE_KEY --org modeled-information-format \
-  --visibility selected --repos .github < ~/.secrets/modeled-information-format-ci.pem
+# App private key -> org secret CATALOG_CLIENT_APP_PRIVATE_KEY: GET the org public key,
+# sealed-box encrypt the .pem, PUT { encrypted_value, key_id, visibility:"all" }.
 ```
 
 Also:
 
 - Allow-list `actions/create-github-app-token` (it is `actions/*`, intended-allowed
   — confirm, don't assume).
-- The App needs **contents** (write), **pull requests** (write), and **metadata**
-  (read, to enumerate `installation/repositories`) — `modeled-information-format-ci`
-  already has these.
+- The `catalog` App needs **contents** (write), **pull requests** (write),
+  **actions** (write, for repository_dispatch/workflow_dispatch to plugin repos),
+  and **metadata** (read, to enumerate `installation/repositories`).
 - **Zero-touch ruleset bypass:** on each target repo, let the App actor bypass the
   required human review on `deps/external-plugin/*` PRs while keeping
   `catalog-admission` + the gates as required checks — so the fail-closed gate is
