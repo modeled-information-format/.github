@@ -81,7 +81,8 @@
         "ontologies/.github/workflows/release.yml",
         "research-harness-template/.github/workflows/release.yml",
         "mif-docs-plugin/.github/workflows/release.yml",
-        "claude-code-plugins/.github/workflows/release.yml"
+        "claude-code-plugins/.github/workflows/release.yml",
+        "mif-rs/.github/workflows/admin-set-package-visibility.yml"
       ]
     }
   }
