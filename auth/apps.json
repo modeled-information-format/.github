@@ -6,7 +6,7 @@
   "identifier": "client-id",
   "apps": {
     "ci": {
-      "purpose": "General CI cross-repo identity. Reads org/sibling state the default GITHUB_TOKEN cannot — primary consumer is OpenSSF Scorecard reading branch protection (administration:read) so posture scores from real settings.",
+      "purpose": "General CI cross-repo identity. Reads org/sibling state the default GITHUB_TOKEN cannot — primary consumer is OpenSSF Scorecard reading branch protection (administration:read) so posture scores from real settings. Also mints the read-only cross-repo identity MIF's deploy uses to fetch and attestation-verify the ontologies repo's signed release tarball (ADR-019).",
       "id_variable": "CI_CLIENT_APP_ID",
       "key_secret": "CI_CLIENT_APP_PRIVATE_KEY",
       "permissions": {
@@ -15,11 +15,13 @@
         "pull_requests": "read",
         "issues": "read",
         "actions": "read",
-        "checks": "read"
+        "checks": "read",
+        "attestations": "read"
       },
       "install_on": "all",
       "consumers": [
-        ".github/.github/workflows/reusable-scorecard.yml"
+        ".github/.github/workflows/reusable-scorecard.yml",
+        "MIF/.github/workflows/deploy.yml"
       ]
     },
     "catalog": {
@@ -48,7 +50,8 @@
       "install_on": "all",
       "consumers": [
         "modeled-information-format.github.io/.github/workflows/deploy.yml",
-        "research-harness-template/.github/workflows/docs.yml"
+        "research-harness-template/.github/workflows/docs.yml",
+        "ontologies/.github/workflows/release.yml"
       ]
     },
     "automerge": {
