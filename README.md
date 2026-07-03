@@ -4,8 +4,14 @@ Org-wide community-health defaults, reusable attested quality-gate workflows,
 and the centralized signing/verification workflows for the **modeled-information-format**
 organization.
 
-[![auth: 5 least-privilege apps](https://img.shields.io/badge/auth-5%20least--privilege%20apps-F5B642?logo=github&logoColor=white)](docs/adr/ADR-011-least-privilege-app-fleet.md)
+[![auth: 6 least-privilege apps](https://img.shields.io/badge/auth-6%20least--privilege%20apps-F5B642?logo=github&logoColor=white)](docs/adr/ADR-011-least-privilege-app-fleet.md)
 [![apps manifest: jq-validated](https://img.shields.io/badge/apps%20manifest-jq--validated-34D3E8?logo=githubactions&logoColor=white)](auth/apps.json)
+[![app: ci](https://img.shields.io/badge/app-ci-34D3E8?logo=github&logoColor=white)](docs/onboarding/app/five-app-provisioning.md)
+[![app: catalog](https://img.shields.io/badge/app-catalog-A371F7?logo=github&logoColor=white)](docs/onboarding/app/five-app-provisioning.md)
+[![app: pages](https://img.shields.io/badge/app-pages-3FB950?logo=github&logoColor=white)](docs/onboarding/app/five-app-provisioning.md)
+[![app: automerge](https://img.shields.io/badge/app-automerge-F5B642?logo=github&logoColor=white)](docs/onboarding/app/five-app-provisioning.md)
+[![app: release](https://img.shields.io/badge/app-release-F2557D?logo=github&logoColor=white)](docs/onboarding/app/five-app-provisioning.md)
+[![app: issues](https://img.shields.io/badge/app-issues-1F6FEB?logo=github&logoColor=white)](docs/onboarding/app/five-app-provisioning.md)
 
 ## GitHub Actions policy
 

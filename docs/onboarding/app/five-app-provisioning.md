@@ -1,6 +1,6 @@
-# Five-App Fleet — Reference
+# Six-App Fleet — Reference
 
-The org's automation authenticates as **five least-privilege GitHub Apps**. Each
+The org's automation authenticates as **six least-privilege GitHub Apps**. Each
 mints short-lived installation tokens via SHA-pinned
 `actions/create-github-app-token` using its OAuth **client-id** (the deprecated
 numeric `app-id` is retired as an auth input). Governed by
@@ -19,10 +19,13 @@ Every app's client-id lives in an org **variable** and its private key in an org
 | `pages` | MIF Pages | `Iv23liT9K2pQNdziydw4` | `4187014` | `PAGES_CLIENT_APP_ID` | `PAGES_CLIENT_APP_PRIVATE_KEY` |
 | `automerge` | MIF Automerge | `Iv23li1wVKsTbJ0tVv2d` | `4187029` | `AUTOMERGE_CLIENT_APP_ID` | `AUTOMERGE_CLIENT_APP_PRIVATE_KEY` |
 | `release` | MIF Release | `Iv23lii4nELn3fIt6FsT` | n/a | `RELEASE_CLIENT_APP_ID` | `RELEASE_CLIENT_APP_PRIVATE_KEY` |
+| `issues` | MIF Issues | — (not yet created) | — (not yet created) | `ISSUES_CLIENT_APP_ID` | `ISSUES_CLIENT_APP_PRIVATE_KEY` |
 
 ## Common configuration
 
-Identical across all five apps:
+Identical across all six apps, **except** `issues`' Organization permissions
+(see [its section](#issues--issuessub-issuesmilestonesdiscussionsprojects-v2-write)
+below — it is the first app in the fleet that needs one):
 
 | Setting | Value |
 | --- | --- |
@@ -30,7 +33,7 @@ Identical across all five apps:
 | Callback URL | blank |
 | Setup URL | blank |
 | Webhook | inactive — a token-minting identity, not webhook-driven |
-| Organization permissions | none (all No access) |
+| Organization permissions | none (all No access), except `issues` — see below |
 | Account permissions | none (all No access) |
 | Event subscriptions | none |
 | Installation | only `modeled-information-format`, all repositories |
@@ -97,6 +100,24 @@ OIDC attestation is unchanged and does not use this app.
 | Contents | Read and write |
 | Packages | Read and write (only where the repo publishes packages) |
 
+### `issues` — Issues/sub-issues/Milestones/Discussions/Projects-v2 write
+
+Write identity for planning-plugin CI (currently `gdlc`'s live integration tests):
+creates/updates issues and sub-issues, Milestones, Discussions, and org-level
+Projects v2 items and field values against a sandbox repo. `GITHUB_TOKEN` is
+rejected for org-level Projects v2 mutations, so this is the first app in the
+fleet that needs an **Organization** permission, not just Repository ones.
+
+| Permission | Level |
+| --- | --- |
+| Issues | Read and write |
+| Pull requests | Read and write |
+| Discussions | Read and write |
+
+| Organization permission | Level |
+| --- | --- |
+| Projects | Read and write |
+
 ## Icon colors
 
 One accent per role on the MIF dark field (`ci` and `automerge` reuse the brand
@@ -110,6 +131,7 @@ avatar and the set stays colorblind-distinguishable.
 | `pages` | `#3FB950` | green, deploy / live site |
 | `automerge` | `#F5B642` | human-amber, the approval Dependabot cannot give |
 | `release` | `#F2557D` | rose-red, ship / cut a release |
+| `issues` | `#1F6FEB` | GitHub blue, the planning/issue-tracking write path |
 
 ## Credential provisioning
 
