@@ -25,7 +25,7 @@
       ]
     },
     "catalog": {
-      "purpose": "Marketplace catalog updates — re-pins external plugin entries to their latest attested release and opens auto-merge PRs against the catalog.",
+      "purpose": "Marketplace catalog updates — re-pins external plugin entries (including a marketplace's own self-referential entries for vendored plugins) to their latest attested release and opens auto-merge PRs against the catalog.",
       "id_variable": "CATALOG_CLIENT_APP_ID",
       "key_secret": "CATALOG_CLIENT_APP_PRIVATE_KEY",
       "permissions": {
@@ -35,7 +35,8 @@
       },
       "install_on": "all",
       "consumers": [
-        ".github/.github/workflows/plugin-catalog-update-hub.yml"
+        ".github/.github/workflows/plugin-catalog-update-hub.yml",
+        "gdlc/.github/workflows/release.yml"
       ]
     },
     "pages": {
