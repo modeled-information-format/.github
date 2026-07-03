@@ -131,6 +131,12 @@ jobs:
           output: trivy-iac-license.sarif
           severity: ${{ inputs.severity }}
           exit-code: '0'   # report to code scanning; the code-scanning check is the gate
+          # trivy-action@v0.36.0 defaults `version` to its own hardcoded
+          # 'v0.70.0', independent of the actual latest Trivy release —
+          # pin explicitly and keep current, since Trivy CLI vulnerability
+          # DB compatibility fixes matter for a live, continuously-updated
+          # trivy-db artifact this action pulls fresh on every run.
+          version: v0.72.0
 
       - name: Upload IaC + license SARIF
         if: always()
@@ -197,6 +203,9 @@ jobs:
           output: trivy-image.sarif
           severity: ${{ inputs.severity }}
           exit-code: '1'   # fail-closed on image vulnerabilities
+          # See the fs/license scan step above for why this is pinned
+          # explicitly rather than left at trivy-action's stale default.
+          version: v0.72.0
 
       - name: Upload image SARIF
         if: always()
