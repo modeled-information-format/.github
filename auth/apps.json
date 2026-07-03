@@ -1,6 +1,6 @@
 {
   "$schema": "./apps.schema.json",
-  "description": "MIF org GitHub-App auth manifest — single source of truth. Five least-privilege GitHub Apps mint short-lived installation tokens for org workflows. Each App is identified by its OAuth client-id (GitHub's current best practice; the legacy numeric app-id is deprecated and warns). Per app: id_variable = org Actions VARIABLE holding the OAuth client-id (Iv23...; public, so optional-App jobs may gate on it in if:); key_secret = org Actions SECRET holding the App private key (PEM); permissions = installed least-privilege set (Repository perms unless prefixed org:; metadata:read implicit); install_on = repos the App is installed on ('all' = every org repo, org-wide; the apps are installed org-wide and wired per gate as repos adopt the standard suite); consumers = workflows that mint this App's token. Tokens are minted with the SHA-pinned mint_action via its client-id input. Governed by ADR-011 (supersedes ADR-008); validated in CI by .github/workflows/app-manifest-validate.yml via inline jq cross-checks (SHA pin, role/name match, credential uniqueness, required fields, permission enums, no unknown keys, install_on, consumer paths). auth/apps.schema.json documents the manifest shape but is not executed in CI.",
+  "description": "MIF org GitHub-App auth manifest — single source of truth. Six least-privilege GitHub Apps mint short-lived installation tokens for org workflows. Each App is identified by its OAuth client-id (GitHub's current best practice; the legacy numeric app-id is deprecated and warns). Per app: id_variable = org Actions VARIABLE holding the OAuth client-id (Iv23...; public, so optional-App jobs may gate on it in if:); key_secret = org Actions SECRET holding the App private key (PEM); permissions = installed least-privilege set (Repository perms unless prefixed org:; metadata:read implicit); install_on = repos the App is installed on ('all' = every org repo, org-wide; the apps are installed org-wide and wired per gate as repos adopt the standard suite); consumers = workflows that mint this App's token. Tokens are minted with the SHA-pinned mint_action via its client-id input. Governed by ADR-011 (supersedes ADR-008); validated in CI by .github/workflows/app-manifest-validate.yml via inline jq cross-checks (SHA pin, role/name match, credential uniqueness, required fields, permission enums, no unknown keys, install_on, consumer paths). auth/apps.schema.json documents the manifest shape but is not executed in CI.",
   "version": 1,
   "mint_action": "actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1",
   "identifier": "client-id",
@@ -82,6 +82,21 @@
         "research-harness-template/.github/workflows/release.yml",
         "mif-docs-plugin/.github/workflows/release.yml",
         "claude-code-plugins/.github/workflows/release.yml"
+      ]
+    },
+    "issues": {
+      "purpose": "Issues/sub-issues/Milestones/Discussions/Projects-v2/pull-request-review write identity for the gdlc GitHub SDLC planning plugins' live integration tests. GITHUB_TOKEN is rejected for org-level Projects v2 mutations (organization-scoped, not repository-scoped) and for org-level Issue Types reads, so any CI job that exercises github-sdlc-planning's create_issue/add_sub_issue/add_item_to_project/set_field_value/create_milestone/create_discussion or github-pull-requests' request_review/get_linked_issues against a real repo needs an App-minted token, not the default. Endpoint audit backing the permission set (gdlc@8c4fdcb, plugins/*/mcp-server/src): REST GET/PATCH /repos/{o}/{r}/issues/{n}, GET /repos/{o}/{r}/labels/{name}, GET/POST /repos/{o}/{r}/milestones(/{n}), GET /repos/{o}/{r}/issues/{n}/timeline (all Issues); GET /repos/{o}/{r}/pulls/{n}, GET/POST/DELETE /repos/{o}/{r}/pulls/{n}/requested_reviewers, GET /repos/{o}/{r}/pulls/{n}/commits (all Pull requests); GraphQL createIssue/addSubIssue/node{...on Issue}/repository{issue{subIssues}} (Issues); addProjectV2ItemById/updateProjectV2ItemFieldValue/organization{projectV2}/organization{issueTypes} (org:Projects); repository{discussionCategories}/createDiscussion/repository{discussions} (Discussions); repository{pullRequest{body,closingIssuesReferences}} (Pull requests). GET /repos/{o}/{r} and GET /users/{login} need no declared permission (Metadata is implicit baseline; user lookup is public).",
+      "id_variable": "ISSUES_CLIENT_APP_ID",
+      "key_secret": "ISSUES_CLIENT_APP_PRIVATE_KEY",
+      "permissions": {
+        "issues": "write",
+        "pull_requests": "write",
+        "discussions": "write",
+        "org:projects": "write"
+      },
+      "install_on": "all",
+      "consumers": [
+        "gdlc/.github/workflows/live-integration-tests.yml"
       ]
     }
   }
