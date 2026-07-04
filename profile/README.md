@@ -1,6 +1,6 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/modeled-information-format/.github/main/.github/social-preview.png" width="860"
-       alt="modeled-information-format — the org-wide foundation. SHA-pinned reusable CI, attested signing and verification, and six least-privilege GitHub Apps shared by every repo in the ecosystem.">
+  <img src="https://raw.githubusercontent.com/modeled-information-format/MIF/main/.github/social-preview.png" width="860"
+       alt="MIF — the Modeled Information Format specification. The canonical schema every conformant tool implements against: one document, read losslessly as human Markdown and machine JSON-LD.">
 </p>
 
 # Modeled Information Format (MIF)
