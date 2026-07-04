@@ -14,3 +14,35 @@ jobs:
     permissions:
       contents: read
     uses: modeled-information-format/.github/.github/workflows/reusable-actionlint.yml@bf26b6ad27d0b98a46552929e418a090ec116ee0
+
+  # Auto-publish: after a green check on a push to main, tell the org Pages
+  # site to rebuild and redeploy by firing the `source-updated`
+  # repository_dispatch its deploy.yml waits for. Runs only on push (not on
+  # PRs). Without this, `index.html` changes merge to main but never reach
+  # the live site until someone manually runs the .io repo's deploy
+  # workflow_dispatch — the same dormant-hook gap research-harness-template
+  # fixed for itself; see that repo's docs.yml for the identical pattern.
+  notify-deploy:
+    name: notify org Pages
+    needs: actionlint
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Mint a token scoped to the org Pages repo
+        id: app-token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          client-id: ${{ vars.PAGES_CLIENT_APP_ID }}
+          private-key: ${{ secrets.PAGES_CLIENT_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: modeled-information-format.github.io
+          # Down-scope the minted token: the repository_dispatch only needs contents:write.
+          permission-contents: write
+
+      - name: Trigger the org Pages redeploy
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          gh api --method POST \
+            "repos/${{ github.repository_owner }}/modeled-information-format.github.io/dispatches" \
+            -f event_type=source-updated
