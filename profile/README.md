@@ -1,9 +1,9 @@
-# Modeled Information Format (MIF)
-
 <p align="center">
   <img src="https://raw.githubusercontent.com/modeled-information-format/.github/main/.github/social-preview.png" width="860"
        alt="modeled-information-format — the org-wide foundation. SHA-pinned reusable CI, attested signing and verification, and six least-privilege GitHub Apps shared by every repo in the ecosystem.">
 </p>
+
+# Modeled Information Format (MIF)
 
 **The opinionated, OKF-compliant content model that fills OKF's deliberately empty envelope.**
 
