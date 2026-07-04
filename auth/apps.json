@@ -82,7 +82,9 @@
         "ontologies/.github/workflows/release.yml",
         "research-harness-template/.github/workflows/release.yml",
         "mif-docs-plugin/.github/workflows/release.yml",
-        "claude-code-plugins/.github/workflows/release.yml"
+        "claude-code-plugins/.github/workflows/release.yml",
+        "gdlc/.github/workflows/release.yml",
+        "gdlc/.github/workflows/live-integration-tests.yml"
       ]
     },
     "issues": {
