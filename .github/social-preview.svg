@@ -1,0 +1,85 @@
+<svg width="1280" height="640" viewBox="0 0 1280 640" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="modeled-information-format — the org-wide foundation. SHA-pinned reusable CI, attested signing and verification, and six least-privilege GitHub Apps shared by every repo in the ecosystem.">
+  <title>modeled-information-format — the org's shared foundation</title>
+  <desc>Dark field. The chevron-M mark and org wordmark. Title "The Shared Foundation". Three pillars — reusable quality gates, attested signing, least-privilege apps — beside a diagram of repos fanning out from this one shared foundation.</desc>
+  <defs>
+    <linearGradient id="field" x1="0" y1="0" x2="1280" y2="640" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#0A0D13"/>
+      <stop offset="1" stop-color="#0E121B"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1280" height="640" fill="url(#field)"/>
+  <rect x="36" y="36" width="1208" height="568" rx="20" fill="none" stroke="#222C3C" stroke-width="2"/>
+
+  <!-- ===== Identity lockup (top-left) ===== -->
+  <g transform="translate(84 66) scale(1.15)" fill="none" stroke-width="4" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M6 42 L6 6 L24 29" stroke="#34D3E8"/>
+    <path d="M24 29 L42 6 L42 42" stroke="#F5B642"/>
+    <path d="M24 25.6 L27.4 29 L24 32.4 L20.6 29 Z" fill="#E8EEF6" stroke="none"/>
+  </g>
+  <text x="150" y="112" font-family="Menlo, 'SF Mono', 'JetBrains Mono', monospace"
+        font-size="30" font-weight="700" letter-spacing="0.04em" fill="#E8EEF6">modeled-information-format</text>
+  <text x="150" y="136" font-family="Menlo, 'SF Mono', 'JetBrains Mono', monospace"
+        font-size="15" fill="#7C8AA0" letter-spacing="0.05em">Org-wide configuration and reusable workflows</text>
+
+  <!-- ===== Title block (left column) ===== -->
+  <text x="84" y="214" font-family="system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif"
+        font-size="56" font-weight="700" letter-spacing="-0.02em" fill="#E8EEF6">The Shared Foundation</text>
+  <text x="86" y="254" font-family="Menlo, 'SF Mono', 'JetBrains Mono', monospace"
+        font-size="17" fill="#AEBCCF" letter-spacing="0.01em">One governance layer every repo in the ecosystem builds on.</text>
+
+  <!-- ===== Three pillars ===== -->
+  <rect x="86" y="316" width="16" height="16" rx="2" fill="#34D3E8"/>
+  <text x="122" y="324" font-family="system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif"
+        font-size="24" font-weight="600" fill="#E8EEF6">Reusable quality gates</text>
+  <text x="122" y="350" font-family="system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif"
+        font-size="16" fill="#7C8AA0">SAST, SCA, Trivy, Scorecard — SHA-pinned, called by every repo.</text>
+
+  <path d="M94 398 L100.4 404.4 L94 410.8 L87.6 404.4 Z" fill="#E8EEF6"/>
+  <text x="122" y="406" font-family="system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif"
+        font-size="24" font-weight="600" fill="#E8EEF6">Attested signing</text>
+  <text x="122" y="432" font-family="system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif"
+        font-size="16" fill="#7C8AA0">SLSA-signed releases, fail-closed verification before publish.</text>
+
+  <circle cx="94" cy="488" r="9" fill="#F5B642"/>
+  <text x="122" y="496" font-family="system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif"
+        font-size="24" font-weight="600" fill="#E8EEF6">Least-privilege apps</text>
+  <text x="122" y="522" font-family="system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif"
+        font-size="16" fill="#7C8AA0">Six scoped GitHub Apps mint every workflow's token.</text>
+
+  <!-- ===== Fan-out motif (right column): this repo's foundation, other repos build on it ===== -->
+  <g transform="translate(671.2 60.56) scale(0.96)">
+    <text x="280" y="114" text-anchor="middle" font-family="ui-monospace, 'SF Mono', Menlo, monospace" font-size="12" letter-spacing="0.1em" fill="#7C8AA0">ONE FOUNDATION, MANY REPOS</text>
+
+    <rect x="206" y="130" width="148" height="44" rx="10" fill="#151B27" stroke="#34D3E8" stroke-width="2"/>
+    <text x="280" y="157" text-anchor="middle" font-family="ui-monospace, 'SF Mono', Menlo, monospace" font-size="13.5" font-weight="700" fill="#34D3E8">.github</text>
+
+    <g stroke="#34D3E8" stroke-width="2" fill="none" opacity="0.55">
+      <path d="M280 174 L120 224"/>
+      <path d="M280 174 L280 224"/>
+      <path d="M280 174 L440 224"/>
+    </g>
+
+    <rect x="60" y="230" width="120" height="60" rx="10" fill="#0E121B" stroke="#2E3A4D"/>
+    <text x="120" y="256" text-anchor="middle" font-family="ui-monospace, 'SF Mono', Menlo, monospace" font-size="12" fill="#E8EEF6">MIF</text>
+    <text x="120" y="274" text-anchor="middle" font-family="ui-monospace, 'SF Mono', Menlo, monospace" font-size="10" fill="#7C8AA0">mif-rs</text>
+
+    <rect x="220" y="230" width="120" height="60" rx="10" fill="#0E121B" stroke="#2E3A4D"/>
+    <text x="280" y="256" text-anchor="middle" font-family="ui-monospace, 'SF Mono', Menlo, monospace" font-size="12" fill="#E8EEF6">ontologies</text>
+    <text x="280" y="274" text-anchor="middle" font-family="ui-monospace, 'SF Mono', Menlo, monospace" font-size="10" fill="#7C8AA0">doc-site</text>
+
+    <rect x="380" y="230" width="120" height="60" rx="10" fill="#0E121B" stroke="#2E3A4D"/>
+    <text x="440" y="256" text-anchor="middle" font-family="ui-monospace, 'SF Mono', Menlo, monospace" font-size="12" fill="#E8EEF6">structured-madr</text>
+    <text x="440" y="274" text-anchor="middle" font-family="ui-monospace, 'SF Mono', Menlo, monospace" font-size="10" fill="#7C8AA0">+ more</text>
+
+    <rect x="98" y="336" width="364" height="30" rx="15" fill="#0B2618" stroke="#34C77B" stroke-opacity="0.5"/>
+    <circle cx="116" cy="351" r="4.5" fill="#34C77B"/>
+    <text x="132" y="355" font-family="ui-monospace, 'SF Mono', Menlo, monospace" font-size="12.5" letter-spacing="0.02em" xml:space="preserve"><tspan fill="#34C77B">pin-check</tspan><tspan fill="#AEBCCF"> · every action SHA-pinned</tspan></text>
+  </g>
+
+  <!-- ===== Footer locators ===== -->
+  <text x="84" y="572" font-family="Menlo, 'SF Mono', 'JetBrains Mono', monospace"
+        font-size="15" fill="#7C8AA0" letter-spacing="0.01em">modeled-information-format/.github</text>
+  <text x="1192" y="572" text-anchor="end" font-family="Menlo, 'SF Mono', 'JetBrains Mono', monospace"
+        font-size="15" fill="#7C8AA0" letter-spacing="0.02em">mif-spec.dev</text>
+</svg>
