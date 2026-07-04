@@ -1,3 +1,8 @@
+<p align="center">
+  <img src="https://raw.githubusercontent.com/modeled-information-format/MIF/main/.github/social-preview.png" width="860"
+       alt="MIF — the Modeled Information Format specification. The canonical schema every conformant tool implements against: one document, read losslessly as human Markdown and machine JSON-LD.">
+</p>
+
 # Modeled Information Format (MIF)
 
 **The opinionated, OKF-compliant content model that fills OKF's deliberately empty envelope.**

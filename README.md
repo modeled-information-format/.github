@@ -1,3 +1,8 @@
+<p align="center">
+  <img src=".github/social-preview.png" width="860"
+       alt="modeled-information-format — the org-wide foundation. SHA-pinned reusable CI, attested signing and verification, and six least-privilege GitHub Apps shared by every repo in the ecosystem.">
+</p>
+
 # `.github` — modeled-information-format org configuration
 
 Org-wide community-health defaults, reusable attested quality-gate workflows,
