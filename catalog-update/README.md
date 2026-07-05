@@ -22,8 +22,8 @@ you verified is the thing that runs.*
 
 ## How a marketplace opts in
 
-**Opt-in = install the `modeled-information-format-ci` App on the repo** (with
-`contents: write` + `pull-requests: write`). Discovery is App-install-scoped: the
+**Opt-in = install the org `catalog` App on the repo** (ADR-011; with
+`contents: write` + `pull-requests: write` + `actions: write`, per `auth/apps.json`). Discovery is App-install-scoped: the
 hub updates exactly the repos the App can access that contain a
 `.claude-plugin/marketplace.json`, minus anything in `deny-list.yaml`. There is no
 registry file to maintain — the App-installation set *is* the opt-in, so the hub

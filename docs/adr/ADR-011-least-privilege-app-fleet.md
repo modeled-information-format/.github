@@ -17,7 +17,7 @@ tags:
   - security
 status: accepted
 created: 2026-06-30
-updated: 2026-06-30
+updated: 2026-07-05
 author: MIF Maintainers
 project: modeled-information-format
 technologies:
@@ -33,6 +33,7 @@ related:
   - ADR-008-github-app-ci-identity.md
   - ADR-007-scorecard-posture.md
   - ADR-010-plugin-catalog-hub.md
+  - ADR-013-marketplace-release-automation.md
 ---
 
 # ADR-011: Least-Privilege App Fleet and Org-Wide Standard Gate Suite
@@ -309,6 +310,7 @@ on the repos in its `install_on` list.
 - [ADR-007: OpenSSF Scorecard Posture](ADR-007-scorecard-posture.md) -- the scorecard reusable consumes the `ci` App (renamed from `MIF_CI_CLIENT_APP_ID`).
 - [ADR-010: Plugin Catalog Hub](ADR-010-plugin-catalog-hub.md) -- the catalog hub consumes the `catalog` App (renamed from `CATALOG_UPDATER_APP_*`).
 - [ADR-005: Artifact Signing & Attestation](ADR-005-signing-attestation-verification.md) -- release publishing uses the `release` App token, but attestation stays keyless via the run's OIDC, unaffected.
+- [ADR-013: Automated Attested Marketplace Release on Catalog Admission](ADR-013-marketplace-release-automation.md) -- ADR-013 (accepted 2026-07-05, implementation pending) adds a consumer to the `release` App: a reusable auto-tag workflow (`reusable-release-tag.yml`) pushes the marketplace's next version tag with a release-App token so the tag push fires the release pipeline; no new credential or permission, only new `consumers` entries in `auth/apps.json`.
 
 ## Links
 
