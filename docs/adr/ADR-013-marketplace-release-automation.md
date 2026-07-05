@@ -364,6 +364,19 @@ same reusable.
 3. **Wider routine exercise of the `release` App**: its `contents: write` is
    now invoked on every admitted catalog change, not only at human-initiated
    releases — more audit-log surface for the same credential.
+4. **The last human checkpoint is removed**: today, a human decides when to
+   tag, and can informally weigh a release before doing so. This decision
+   replaces that judgment entirely with "the gate suite verified" — SAST
+   (ADR-003), SCA/secrets/container/IaC scanning (ADR-004), DAST (ADR-006),
+   and VEX. Those gates are bounded by what their configured scanners check
+   for: known rule sets, signature databases, and predicate types. A verdict
+   that everything verified fail-closed means no *known* class of defect was
+   found by the tools run; it is not a claim that the release is free of
+   vulnerabilities the gate suite does not test for. Under the status quo
+   (Option 1), a human tagging on their own schedule was an implicit, informal
+   second check on top of the same gates; automating the tag removes that
+   check without replacing it with anything stronger than the gates
+   themselves already provide.
 
 ### Neutral
 
@@ -398,7 +411,10 @@ flattening is escapable via the dispatch `bump` input (which does not skip on
 an already-tagged head) or a manual tag (which `push`-triggered runs yield
 to); the `release` App's added consumer is
 declared in `auth/apps.json` (jq-validated in CI per ADR-011), keeping the
-credential's consumer set auditable.
+credential's consumer set auditable. The removed human checkpoint is not
+mitigated by this decision: the gate suite's coverage is exactly what it was
+before automation, and remains the subject of ADR-003/004/006, not of this
+ADR. Widening that coverage is a separate decision.
 
 ### Implementation
 

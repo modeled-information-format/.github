@@ -311,6 +311,19 @@ SHA-pinned to a full 40-character commit (the org enforces this via `pin-check`)
    workflow, verifying predicates from multiple signers requires multiple
    `reusable-verify-gates.yml` invocations; a single mixed call fails closed on
    a valid artifact.
+3. **A verified attestation proves the gates ran clean, not that the artifact
+   is free of vulnerabilities**: "verifies fail-closed" means every required
+   predicate is present, correctly signed, and its scan reported no finding
+   at or above the configured threshold. The scans behind those predicates
+   (SAST per ADR-003; SCA, secrets, container, and IaC scanning per ADR-004;
+   DAST per ADR-006; VEX) are each bounded by their own rule sets, signature
+   databases, and coverage. A clean verdict is best-effort assurance against
+   the classes of defect those tools check for, not a proof of absence for
+   defects outside that coverage (an unknown vulnerability class, a logic
+   bug no scanner models, a zero-day not yet in any signature database).
+   Any decision that treats "attestations verify fail-closed" as sufficient
+   grounds to skip a human review step (for example ADR-013's automated
+   release trigger) inherits this limit and does not exceed it.
 
 ### Neutral
 
