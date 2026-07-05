@@ -77,9 +77,10 @@ pipeline already admitted.
 
 ### Primary Decision Drivers
 
-1. **Every admitted catalog state becomes an attested release**: WHEN a change
+1. **The released catalog is never staler than the admitted one**: WHEN a change
    to `.claude-plugin/marketplace.json` lands on the marketplace's `main`, the
    marketplace SHALL publish a release whose artifacts embed that catalog state
+   or a newer admitted one (rapid successive merges coalesce into the newest),
    and whose attestations verify fail-closed. The staleness window becomes one
    pipeline run, not one human memory.
 2. **Reuse the existing release pipeline unchanged**: the new mechanism SHALL
@@ -195,7 +196,7 @@ tag as a by-product (or publishing untagged).
 ### Option 4: Target-repo auto-tag seam via a reusable workflow (chosen)
 
 **Description**: A new reusable workflow in `.github`
-(`reusable-marketplace-release.yml`) that each marketplace calls through a thin
+(`reusable-release-tag.yml`) that each marketplace calls through a thin
 SHA-pinned caller triggered on `push` to `main`, path-filtered to the catalog
 file. The reusable computes the next patch version from the repo's latest
 `v*.*.*` tag, skips if the head commit is already tagged, mints a
@@ -233,10 +234,9 @@ release-App token, and pushes the annotated tag. The existing tag-gated
 The org adopts Option 4: an auto-tag release seam in the marketplace repo,
 implemented once as a reusable workflow in `.github`.
 
-**Reusable (`.github/workflows/reusable-marketplace-release.yml`).** A
-`workflow_call` reusable with inputs `catalog-path` (default
-`.claude-plugin/marketplace.json`), `bump` (`patch` | `minor` | `major`,
-default `patch`), and `dry-run` (boolean, default `false`); and one secret,
+**Reusable (`.github/workflows/reusable-release-tag.yml`).** A
+`workflow_call` reusable with inputs `bump` (`patch` | `minor` | `major`,
+default `patch`) and `dry-run` (boolean, default `false`); and one secret,
 `app-private-key`, the org `release` App's private key (its client id is read
 from `vars.RELEASE_CLIENT_APP_ID`, following the same convention as
 `reusable-dependabot-automerge.yml`). Its single job:
@@ -244,9 +244,12 @@ from `vars.RELEASE_CLIENT_APP_ID`, following the same convention as
 1. Checks out the calling repo with full tag history.
 2. Resolves the latest `v*.*.*` tag by semver order (`v0.0.0` when none) and
    computes the next version per `bump`.
-3. **Skips successfully** if the head commit already carries a `v*.*.*` tag —
-   idempotent under re-runs, and a human who tagged the merge commit first
-   wins.
+3. **Skips successfully on `push`-triggered runs** if the head commit already
+   carries a `v*.*.*` tag — idempotent under re-runs, and a human who tagged
+   the merge commit first wins. A `workflow_dispatch` run does not skip: an
+   explicitly requested bump tags the next version even on an already-tagged
+   head, so the human minor/major path still works after an automatic patch
+   tag has landed on the same commit.
 4. In `dry-run`, prints the resolved current and next versions and stops.
 5. Otherwise mints an installation token via the SHA-pinned
    `actions/create-github-app-token` (client id `vars.RELEASE_CLIENT_APP_ID`,
@@ -260,7 +263,15 @@ pipeline to fire. The `release` App already holds `contents: write` org-wide
 and already publishes these repos' releases (`auth/apps.json`), so no new
 credential or permission is introduced — only a new consumer.
 
+The reusable is deliberately catalog-agnostic: it is a generic
+next-semver auto-tag seam. What makes a caller a *marketplace* release is
+entirely the caller's `paths` filter on the catalog file, so any other
+tag-released repo can adopt the same reusable unchanged.
+
 **Thin caller (each marketplace repo, `.github/workflows/marketplace-release.yml`).**
+The snippet is illustrative — a concrete starting shape for Implementation
+item 4; once the caller file lands in each marketplace, that file is the
+source of truth.
 
 ```yaml
 "on":
@@ -287,7 +298,7 @@ permissions:
 
 jobs:
   tag:
-    uses: modeled-information-format/.github/.github/workflows/reusable-marketplace-release.yml@<sha>
+    uses: modeled-information-format/.github/.github/workflows/reusable-release-tag.yml@<sha>
     with:
       bump: ${{ inputs.bump || 'patch' }}
       dry-run: ${{ inputs.dry-run || false }}
@@ -296,19 +307,23 @@ jobs:
 ```
 
 The push trigger is path-filtered to the catalog file, so docs-site and CI
-changes on `main` release nothing. `workflow_dispatch` with the `bump` input is
-the human path for minor/major bumps; manually pushed tags remain first-class
-and, via the skip guard, take precedence on the same commit.
+changes on `main` release nothing. The `concurrency` group is load-bearing:
+it serializes runs so two merges cannot race to push the same next tag, and
+under GitHub's pending-run coalescing a burst of merges collapses into one
+run that tags the newest admitted state — accepted behavior under Driver 1's
+freshness semantics (the intermediate states of a burst ship inside the
+newest release rather than as releases of their own). `workflow_dispatch`
+with the `bump` input is the human path for minor/major bumps and does not
+skip on an already-tagged head; manually pushed tags remain first-class and,
+on `push`-triggered runs, take precedence on the same commit.
 
-**End-to-end flow after this decision.** Plugin repo cuts an attested release →
-hub re-pins the catalog verify-first and opens an auto-merge PR (ADR-010) →
-`catalog-admission` re-verifies fail-closed and the PR merges → the caller
-fires on the catalog-path push to `main`, and the reusable tags `v<next>` as
-the `release` App → the tag fires the marketplace's existing `release.yml`:
-build → provenance → SBOM → seam verdicts → cosign-signed catalog → VEX →
-fail-closed verify → publish (ADR-005). The pipeline that previously stopped at
-the merge now terminates at a published, attested marketplace release embedding
-the admitted catalog.
+**End-to-end flow after this decision.** The hub's per-entry flow
+(`catalog-update/README.md` steps 1-5; ADR-010) runs unchanged through the
+admission-verified merge; the caller then fires on the catalog-path push to
+`main`, the reusable tags `v<next>` as the `release` App, and the tag fires
+the marketplace's existing attested release pipeline (ADR-005) unchanged. The
+pipeline that previously stopped at the merge now terminates at a published,
+attested marketplace release embedding the admitted catalog.
 
 **Version semantics.** The marketplace's version identity remains the git tag;
 `marketplace.json` carries no version field and the automation writes nothing
@@ -339,10 +354,10 @@ same reusable.
 
 ### Negative
 
-1. **Release volume grows**: every admitted catalog change publishes a release.
-   At the hub's weekly cadence this is modest, but a busy week produces several
-   releases, each with full attestation cost (CI minutes, Rekor entries,
-   release-list noise).
+1. **Release volume grows**: every admitted catalog change publishes a release
+   (bursts coalesce into one release of the newest state). At the hub's weekly
+   cadence this is modest, but a busy week produces several releases, each
+   with full attestation cost (CI minutes, Rekor entries, release-list noise).
 2. **Patch-only automation under-communicates**: a semantically significant
    catalog change (a newly admitted plugin) lands as a patch bump unless a
    human pre-empts with the dispatch input or a manual tag.
@@ -379,8 +394,9 @@ ADR-005's release pipeline with a single compose-only trigger.
 Mitigations for the accepted negatives: release noise is bounded by the
 path filter (only catalog changes release) and the hub's weekly cadence, and
 the `dry-run` input gives a no-write rehearsal path; the patch-only semantic
-flattening is escapable at any time via the dispatch `bump` input or a manual
-tag, which the skip guard lets win; the `release` App's added consumer is
+flattening is escapable via the dispatch `bump` input (which does not skip on
+an already-tagged head) or a manual tag (which `push`-triggered runs yield
+to); the `release` App's added consumer is
 declared in `auth/apps.json` (jq-validated in CI per ADR-011), keeping the
 credential's consumer set auditable.
 
@@ -388,10 +404,10 @@ credential's consumer set auditable.
 
 Work items, in order; each is verifiable as stated.
 
-1. **Add the reusable** `.github/workflows/reusable-marketplace-release.yml`
-   with the inputs, secret, skip guard, dry-run, and App-token tag push
-   specified in the Decision. Every action SHA-pinned; `pin-check` and
-   `actionlint` must pass.
+1. **Add the reusable** `.github/workflows/reusable-release-tag.yml` with the
+   inputs, secret, push-only skip guard, dispatch semantics, dry-run, and
+   App-token tag push specified in the Decision. Every action SHA-pinned;
+   `pin-check` and `actionlint` must pass.
 2. **Register it in the workflow catalog**
    (`.github/skills/attested-delivery/references/workflow-catalog.md`) — the
    `catalog-check` gate hard-fails the PR otherwise (ADR-010).
@@ -399,12 +415,12 @@ Work items, in order; each is verifiable as stated.
    (`consumers` gains the reusable's path and each caller's path);
    `app-manifest-validate.yml` enforces this.
 4. **Add the thin caller** to `claude-code-plugins` as
-   `.github/workflows/marketplace-release.yml` (snippet in the Decision),
-   pinning the reusable to a full-length SHA.
+   `.github/workflows/marketplace-release.yml` (illustrative snippet in the
+   Decision), pinning the reusable to a full-length SHA.
 5. **Verify end-to-end on `claude-code-plugins`**: first a `workflow_dispatch`
    dry-run (resolved versions printed, nothing pushed); then a live catalog
-   change merged through admission, observing the auto-tag (`v0.1.1` from the
-   current `v0.1.0`), the release run, and finally
+   change merged through admission, observing the auto-tag (a patch increment
+   of the then-latest `v*.*.*` tag), the release run, and finally
    `gh attestation verify` on the released tarball plus `cosign verify-blob`
    on the released catalog — both must pass fail-closed.
 6. **Repeat the caller for `gdlc`**, and update `auth/apps.json` consumers
@@ -416,7 +432,7 @@ Work items, in order; each is verifiable as stated.
 
 ## Related Decisions
 
-- [ADR-005: Artifact Signing, SLSA Attestation & Fail-Closed Verification](ADR-005-signing-attestation-verification.md) -- the attested release pipeline this seam triggers; its tag-gated publish invariant is preserved by tagging first.
+- [ADR-005: Artifact Signing, SLSA Attestation & Fail-Closed Verification](ADR-005-signing-attestation-verification.md) -- the attested release pipeline this seam triggers; its fail-closed verify-before-publish model is untouched, and the marketplace `release.yml`'s own tag-gated publish invariant is preserved because the seam pushes the tag first.
 - [ADR-010: Plugin Catalog Hub and Manifest Review](ADR-010-plugin-catalog-hub.md) -- the admission pipeline this decision extends; its terminal step (the admission-verified merge) becomes this seam's starting point.
 - [ADR-011: Least-Privilege App Fleet](ADR-011-least-privilege-app-fleet.md) -- supplies the `release` App identity that mints the tag; this decision adds a consumer to an existing credential rather than a new credential.
 
@@ -449,19 +465,21 @@ Work items, in order; each is verifiable as stated.
 | Publish is tag-gated and mints the `release` App token (`RELEASE_CLIENT_APP_ID`/`RELEASE_CLIENT_APP_PRIVATE_KEY`) | `claude-code-plugins/.github/workflows/release.yml` | L340, L367-L372 | compliant |
 | `catalog-admission` runs on every `pull_request` and `push` to `main` — the seam starts strictly after this gate | `claude-code-plugins/.github/workflows/catalog-admission.yml` | L24-L26 | compliant |
 | `release` App holds `contents: write` org-wide (`install_on: all`); tag creation needs no new permission | `auth/apps.json` | L71-L90 | compliant |
-| Hub mints the `catalog` App (`CATALOG_CLIENT_APP_ID`) and its flow ends at the auto-merge PR; no release dispatch exists | `.github/workflows/plugin-catalog-update-hub.yml` | L48-L49, L113-L114 | compliant (gap confirmed) |
+| Hub mints the `catalog` App (`CATALOG_CLIENT_APP_ID`); its per-entry flow ends at the composite re-pin invocation that opens the auto-merge PR — no release dispatch exists | `.github/workflows/plugin-catalog-update-hub.yml` | L48-L49, L113-L114 (mint); L131-L138 (terminal step) | compliant (gap confirmed) |
 | The documented per-entry update flow terminates at step 5 (auto-merge PR) with the target's `catalog-admission` gate as merge control; no post-merge step follows | `catalog-update/README.md` | L37-L50 | compliant (gap confirmed) |
 | `marketplace.json` carries no version field; version identity is the git tag (latest: `v0.1.0`) | `claude-code-plugins/.claude-plugin/marketplace.json` | — | compliant |
-| `reusable-marketplace-release.yml` exists with skip guard, dry-run, and App-token tag push | `.github/workflows/reusable-marketplace-release.yml` | — | pending |
+| `reusable-release-tag.yml` exists with push-only skip guard, dispatch semantics, dry-run, and App-token tag push | `.github/workflows/reusable-release-tag.yml` | — | pending |
 | Workflow catalog lists the new reusable | `.github/skills/attested-delivery/references/workflow-catalog.md` | — | pending |
 | `auth/apps.json` `release.consumers` includes the reusable and each caller | `auth/apps.json` | — | pending |
 | Thin callers live in `claude-code-plugins` and `gdlc` | `<marketplace>/.github/workflows/marketplace-release.yml` | — | pending |
+| `catalog-update/README.md` flow narrative and the release runbook document the post-merge release step | `catalog-update/README.md`, `docs/runbooks/release-runbook.md` | — | pending |
 | End-to-end verified: admitted catalog change → auto tag → attested release; `gh attestation verify` + `cosign verify-blob` pass | release run evidence | — | pending |
 
 **Summary:** The pre-decision state is confirmed in code: admission ends at the
 merge, release starts at a human tag, and nothing connects them. The decision's
-mechanism rows are pending implementation; work items 1-7 in the Implementation
-section map one-to-one onto the pending rows.
+mechanism rows are pending implementation; Implementation items 1-7 map onto
+the pending rows (the callers row covers items 4 and 6; the documentation row
+covers item 7).
 
 **Action Required:** Implement work items 1-7; re-audit to Compliant when the
 end-to-end row passes.

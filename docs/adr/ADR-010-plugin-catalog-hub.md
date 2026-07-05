@@ -317,6 +317,12 @@ jobs:
 
 **Owner setup for the hub** (org variable + org secret, scoped to `.github`):
 
+> **Superseded (2026-07-05):** the hub now reads `CATALOG_CLIENT_APP_ID` /
+> `CATALOG_CLIENT_APP_PRIVATE_KEY` under ADR-011's `<ROLE>_CLIENT_APP_*`
+> scheme (source of truth: `auth/apps.json`). The commands below are the
+> historical provisioning of the retired `CATALOG_UPDATER_APP_*` credentials
+> and the retired legacy App's key — do not re-run them.
+
 ```bash
 gh variable set CATALOG_UPDATER_APP_CLIENT_ID --org modeled-information-format \
   --visibility selected --repos .github --body "<CLIENT_ID>"
@@ -332,7 +338,7 @@ gh secret set CATALOG_UPDATER_APP_PRIVATE_KEY --org modeled-information-format \
 ## Related Decisions
 
 - [ADR-002: Reusable Quality-Gate Architecture](ADR-002-reusable-quality-gate-architecture.md) -- `reusable-manifest-review.yml` is one of the org's central `workflow_call` reusables; the `catalog-check` gate enforces that every such reusable is documented in the attested-delivery workflow catalog.
-- [ADR-013: Automated Attested Marketplace Release on Catalog Admission](ADR-013-marketplace-release-automation.md) -- extends this pipeline past its terminal step: the admission-verified merge now triggers an automated version bump and the marketplace's attested release, so the decision recorded here ends at the merge but the flow no longer does.
+- [ADR-013: Automated Attested Marketplace Release on Catalog Admission](ADR-013-marketplace-release-automation.md) -- extends this pipeline past its terminal step: under ADR-013 (accepted 2026-07-05, implementation pending) the admission-verified merge triggers an automated version tag and the marketplace's attested release, so the decision recorded here still ends at the merge but the flow, once implemented, does not.
 
 ## Links
 
@@ -356,15 +362,19 @@ gh secret set CATALOG_UPDATER_APP_PRIVATE_KEY --org modeled-information-format \
 
 | Finding | Files | Lines | Assessment |
 |---------|-------|-------|------------|
-| Hub now mints its tokens via `CATALOG_CLIENT_APP_ID` / `CATALOG_CLIENT_APP_PRIVATE_KEY` per ADR-011's `<ROLE>_CLIENT_APP_*` scheme; the `CATALOG_UPDATER_APP_*` names cited in this ADR's Decision, Implementation, and 2026-06-29 audit are retired | `.github/workflows/plugin-catalog-update-hub.yml` | L48-L49, L113-L114 | non-compliant (text drift; mechanism unchanged, rename recorded in ADR-011) |
-| The pipeline's terminal step recorded here (admission-verified auto-merge, nothing after) is extended by ADR-013: a catalog change on `main` now triggers an automated patch-version tag and the marketplace's attested release | `docs/adr/ADR-013-marketplace-release-automation.md` | — | pending (ADR-013 accepted; implementation pending) |
+| Hub now mints its tokens via `CATALOG_CLIENT_APP_ID` / `CATALOG_CLIENT_APP_PRIVATE_KEY` per ADR-011's `<ROLE>_CLIENT_APP_*` scheme; the `CATALOG_UPDATER_APP_*` names cited in this ADR's Decision and Implementation sections are retired | `.github/workflows/plugin-catalog-update-hub.yml` | L48-L49, L113-L114 | non-compliant (text drift; mechanism unchanged, rename recorded in ADR-011) |
+| Retired-identity references corrected in this change: the opt-in text and the hub's header comment named the retired `modeled-information-format-ci` App; both now name the `catalog` App (ADR-011) | `catalog-update/README.md`, `.github/workflows/plugin-catalog-update-hub.yml` | L25; L6 | compliant (fixed 2026-07-05) |
+| The pipeline's terminal step recorded here (admission-verified auto-merge, nothing after) is extended by ADR-013, under which a catalog change on `main` is to trigger an automated patch-version tag and the marketplace's attested release | `docs/adr/ADR-013-marketplace-release-automation.md` | — | pending (ADR-013 accepted; implementation pending) |
 
 **Summary:** The three mechanisms this ADR records remain in production and
 behave as decided. Two updates since the original audit: the hub's credential
 names moved to the ADR-011 `CATALOG_CLIENT_APP_*` scheme (the decision text
 here retains the historical names; treat ADR-011 as authoritative for
-credentials), and ADR-013 extends the flow so the admission merge is no longer
-the end of the pipeline.
+credentials — the Implementation block below is annotated accordingly, and the
+stale `modeled-information-format-ci` references in `catalog-update/README.md`
+and the hub's header comment were corrected in this change), and ADR-013,
+once implemented, extends the flow so the admission merge is no longer the end
+of the pipeline.
 
 **Action Required:** None here; credential naming is governed by ADR-011 and
 the release extension by ADR-013.

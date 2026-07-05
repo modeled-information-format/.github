@@ -14,7 +14,7 @@ tags:
   - release
 status: accepted
 created: 2026-06-29
-updated: 2026-06-29
+updated: 2026-07-05
 author: MIF Maintainers
 project: modeled-information-format
 technologies:
@@ -404,7 +404,7 @@ cosign verify-blob .claude-plugin/marketplace.json \
 - [ADR-002: Reusable Quality-Gate Architecture](ADR-002-reusable-quality-gate-architecture.md) -- the gates whose evidence the attestation seam turns into signed, digest-bound predicates.
 - [ADR-004: Supply-Chain Scanning](ADR-004-supply-chain-scanning.md) -- the SCA/SBOM/vulnerability scans whose verdicts are attested and verified fail-closed here.
 - [ADR-007: Scorecard Posture](ADR-007-scorecard-posture.md) -- posture assessment; this ADR's keyless-signing and SHA-pinning posture aligns with the Scorecard checks.
-- [ADR-013: Automated Attested Marketplace Release on Catalog Admission](ADR-013-marketplace-release-automation.md) -- marketplace catalog changes admitted on `main` now auto-trigger this attested release pipeline via a version tag; the tag-gated publish invariant recorded here is preserved because the tag is pushed first.
+- [ADR-013: Automated Attested Marketplace Release on Catalog Admission](ADR-013-marketplace-release-automation.md) -- under ADR-013 (accepted 2026-07-05, implementation pending), marketplace catalog changes admitted on `main` auto-trigger this attested release pipeline via a version tag; the fail-closed verify-before-publish model recorded here is unchanged, and the marketplace release workflow's own tag-gated publish is preserved because the tag is pushed first.
 
 ## Links
 
@@ -418,7 +418,7 @@ cosign verify-blob .claude-plugin/marketplace.json \
 
 - **Date:** 2026-06-29
 - **Source:** `.github/workflows/sign-and-attest.yml`, `.github/workflows/attest-release.yml`, `.github/workflows/reusable-attest-scan.yml`, `.github/workflows/reusable-cosign-sign.yml`, `.github/workflows/verify-attestation.yml`, `.github/workflows/reusable-verify-gates.yml`.
-- **Related ADRs:** ADR-002, ADR-004, ADR-007
+- **Related ADRs:** ADR-002, ADR-004, ADR-007, ADR-013
 
 ## Audit
 
