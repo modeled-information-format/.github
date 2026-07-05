@@ -101,6 +101,12 @@ jobs:
           image: ${{ env.IMAGE_REF }}
           format: cyclonedx-json
           output-file: sbom.cdx.json
+          # The SBOM is attested as an OCI referrer via cosign below. The
+          # action's own release-attach phase runs under the caller job's
+          # token, which callers keep read-only, so it fails any
+          # tag-triggered run whose tag already has a release - and repos
+          # with immutable releases would reject the upload regardless.
+          upload-release-assets: false
       - name: Attest SBOM (cosign)
         if: ${{ inputs.sbom }}
         run: |
