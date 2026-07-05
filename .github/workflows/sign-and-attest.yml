@@ -101,6 +101,13 @@ jobs:
           image: ${{ env.IMAGE_REF }}
           format: cyclonedx-json
           output-file: sbom.cdx.json
+          # The SBOM is attested as an OCI referrer via cosign below; the
+          # action's own release attach runs under the caller job's token
+          # (read-only for callers like mif-rs's pipeline) and 403s on
+          # tag-triggered runs - and immutable releases would reject the
+          # upload anyway. It killed all four image-attest legs of
+          # mif-rs v0.3.0.
+          upload-release-assets: false
       - name: Attest SBOM (cosign)
         if: ${{ inputs.sbom }}
         run: |
