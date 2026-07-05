@@ -33,6 +33,7 @@ related:
   - ADR-003-sast-gate-suite.md
   - ADR-004-supply-chain-scanning.md
   - ADR-007-scorecard-posture.md
+  - ADR-013-marketplace-release-automation.md
 ---
 
 # ADR-005: Artifact Signing, SLSA Attestation & Fail-Closed Verification
@@ -403,6 +404,7 @@ cosign verify-blob .claude-plugin/marketplace.json \
 - [ADR-002: Reusable Quality-Gate Architecture](ADR-002-reusable-quality-gate-architecture.md) -- the gates whose evidence the attestation seam turns into signed, digest-bound predicates.
 - [ADR-004: Supply-Chain Scanning](ADR-004-supply-chain-scanning.md) -- the SCA/SBOM/vulnerability scans whose verdicts are attested and verified fail-closed here.
 - [ADR-007: Scorecard Posture](ADR-007-scorecard-posture.md) -- posture assessment; this ADR's keyless-signing and SHA-pinning posture aligns with the Scorecard checks.
+- [ADR-013: Automated Attested Marketplace Release on Catalog Admission](ADR-013-marketplace-release-automation.md) -- marketplace catalog changes admitted on `main` now auto-trigger this attested release pipeline via a version tag; the tag-gated publish invariant recorded here is preserved because the tag is pushed first.
 
 ## Links
 

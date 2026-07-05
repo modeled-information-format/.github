@@ -11,7 +11,7 @@ tags:
   - governance
 status: accepted
 created: 2026-06-29
-updated: 2026-06-29
+updated: 2026-07-05
 author: MIF Maintainers
 project: modeled-information-format
 technologies:
@@ -27,6 +27,7 @@ audience:
 related:
   - ADR-002-reusable-quality-gate-architecture.md
   - ADR-011-least-privilege-app-fleet.md
+  - ADR-013-marketplace-release-automation.md
 ---
 
 # ADR-010: Plugin Catalog Hub and Manifest Review
@@ -331,6 +332,7 @@ gh secret set CATALOG_UPDATER_APP_PRIVATE_KEY --org modeled-information-format \
 ## Related Decisions
 
 - [ADR-002: Reusable Quality-Gate Architecture](ADR-002-reusable-quality-gate-architecture.md) -- `reusable-manifest-review.yml` is one of the org's central `workflow_call` reusables; the `catalog-check` gate enforces that every such reusable is documented in the attested-delivery workflow catalog.
+- [ADR-013: Automated Attested Marketplace Release on Catalog Admission](ADR-013-marketplace-release-automation.md) -- extends this pipeline past its terminal step: the admission-verified merge now triggers an automated version bump and the marketplace's attested release, so the decision recorded here ends at the merge but the flow no longer does.
 
 ## Links
 
@@ -342,9 +344,30 @@ gh secret set CATALOG_UPDATER_APP_PRIVATE_KEY --org modeled-information-format \
 
 - **Date:** 2026-06-29
 - **Source:** `.github/workflows/catalog-check.yml`, `.github/workflows/plugin-catalog-update-hub.yml`, `.github/workflows/reusable-manifest-review.yml`, `catalog-update/README.md`, `catalog-update/deny-list.yaml`.
-- **Related ADRs:** ADR-002
+- **Related ADRs:** ADR-002, ADR-013
 
 ## Audit
+
+### 2026-07-05
+
+**Status:** Partial
+
+**Findings:**
+
+| Finding | Files | Lines | Assessment |
+|---------|-------|-------|------------|
+| Hub now mints its tokens via `CATALOG_CLIENT_APP_ID` / `CATALOG_CLIENT_APP_PRIVATE_KEY` per ADR-011's `<ROLE>_CLIENT_APP_*` scheme; the `CATALOG_UPDATER_APP_*` names cited in this ADR's Decision, Implementation, and 2026-06-29 audit are retired | `.github/workflows/plugin-catalog-update-hub.yml` | L48-L49, L113-L114 | non-compliant (text drift; mechanism unchanged, rename recorded in ADR-011) |
+| The pipeline's terminal step recorded here (admission-verified auto-merge, nothing after) is extended by ADR-013: a catalog change on `main` now triggers an automated patch-version tag and the marketplace's attested release | `docs/adr/ADR-013-marketplace-release-automation.md` | — | pending (ADR-013 accepted; implementation pending) |
+
+**Summary:** The three mechanisms this ADR records remain in production and
+behave as decided. Two updates since the original audit: the hub's credential
+names moved to the ADR-011 `CATALOG_CLIENT_APP_*` scheme (the decision text
+here retains the historical names; treat ADR-011 as authoritative for
+credentials), and ADR-013 extends the flow so the admission merge is no longer
+the end of the pipeline.
+
+**Action Required:** None here; credential naming is governed by ADR-011 and
+the release extension by ADR-013.
 
 ### 2026-06-29
 
