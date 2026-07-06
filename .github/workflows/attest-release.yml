@@ -62,6 +62,45 @@ jobs:
         with:
           ref: ${{ steps.tag.outputs.tag }}
 
+      - name: Push plugin-dependency tag
+        # Only on the real release-published event: workflow_dispatch is for
+        # re-attesting an already-released tag, so the dependency tag for that
+        # version should already exist and must not be re-pushed here.
+        if: github.event_name == 'release'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_VERSION: ${{ steps.tag.outputs.version }}
+        run: |
+          set -euo pipefail
+          NAME="$(jq -r '.name' .github/.claude-plugin/plugin.json)"
+          VERSION="$(jq -r '.version' .github/.claude-plugin/plugin.json)"
+          if [ -z "${NAME}" ] || [ "${NAME}" = "null" ] || [ -z "${VERSION}" ] || [ "${VERSION}" = "null" ]; then
+            echo "::error::could not read name/version from .github/.claude-plugin/plugin.json"
+            exit 1
+          fi
+          if [ "${VERSION}" != "${RELEASE_VERSION}" ]; then
+            echo "::error::plugin.json version (${VERSION}) does not match the release tag version (${RELEASE_VERSION}) — bump plugin.json before releasing"
+            exit 1
+          fi
+          DEP_TAG="${NAME}--v${VERSION}"
+          COMMIT="$(git rev-parse HEAD)"
+          if ERR="$(gh api "repos/${{ github.repository }}/git/ref/tags/${DEP_TAG}" 2>&1 >/dev/null)"; then
+            echo "::notice::dependency tag ${DEP_TAG} already exists, skipping"
+          elif [[ "${ERR}" == *"HTTP 404"* ]]; then
+            TAG_SHA="$(gh api "repos/${{ github.repository }}/git/tags" \
+              -f "tag=${DEP_TAG}" \
+              -f "message=Plugin dependency-resolution tag for ${NAME} v${VERSION}" \
+              -f "object=${COMMIT}" \
+              -f "type=commit" \
+              -q .sha)"
+            gh api "repos/${{ github.repository }}/git/refs" \
+              -f "ref=refs/tags/${DEP_TAG}" \
+              -f "sha=${TAG_SHA}"
+          else
+            echo "::error::failed to check for existing dependency tag ${DEP_TAG}: ${ERR}"
+            exit 1
+          fi
+
       - name: Package source tarball
         id: pkg
         env:
