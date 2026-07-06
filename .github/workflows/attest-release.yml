@@ -84,9 +84,21 @@ jobs:
           fi
           DEP_TAG="${NAME}--v${VERSION}"
           COMMIT="$(git rev-parse HEAD)"
-          if ERR="$(gh api "repos/${{ github.repository }}/git/ref/tags/${DEP_TAG}" 2>&1 >/dev/null)"; then
-            echo "::notice::dependency tag ${DEP_TAG} already exists, skipping"
-          elif [[ "${ERR}" == *"HTTP 404"* ]]; then
+          if REF_JSON="$(gh api "repos/${{ github.repository }}/git/ref/tags/${DEP_TAG}" 2>&1)"; then
+            OBJ_SHA="$(echo "${REF_JSON}" | jq -r '.object.sha')"
+            OBJ_TYPE="$(echo "${REF_JSON}" | jq -r '.object.type')"
+            if [ "${OBJ_TYPE}" = "tag" ]; then
+              # Annotated tag: peel it to the commit it actually points at.
+              EXISTING_COMMIT="$(gh api "repos/${{ github.repository }}/git/tags/${OBJ_SHA}" -q '.object.sha')"
+            else
+              EXISTING_COMMIT="${OBJ_SHA}"
+            fi
+            if [ "${EXISTING_COMMIT}" != "${COMMIT}" ]; then
+              echo "::error::dependency tag ${DEP_TAG} already exists but points at ${EXISTING_COMMIT}, not the release commit ${COMMIT} — refusing to leave dependents resolving to the wrong commit"
+              exit 1
+            fi
+            echo "::notice::dependency tag ${DEP_TAG} already exists and points at the release commit, skipping"
+          elif [[ "${REF_JSON}" == *"HTTP 404"* ]]; then
             TAG_SHA="$(gh api "repos/${{ github.repository }}/git/tags" \
               -f "tag=${DEP_TAG}" \
               -f "message=Plugin dependency-resolution tag for ${NAME} v${VERSION}" \
@@ -97,7 +109,7 @@ jobs:
               -f "ref=refs/tags/${DEP_TAG}" \
               -f "sha=${TAG_SHA}"
           else
-            echo "::error::failed to check for existing dependency tag ${DEP_TAG}: ${ERR}"
+            echo "::error::failed to check for existing dependency tag ${DEP_TAG}: ${REF_JSON}"
             exit 1
           fi
 
