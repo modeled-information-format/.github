@@ -127,7 +127,9 @@ Work the epics under GitHub Flow.
    Verify the live site, the served schema mirror, and a clean `llms.txt`.
 4. **Tag + release**: apply the status flip (promote CHANGELOG, set Release), tag the
    version, create the GitHub Release -> `release.yml` runs the attested pipeline
-   (SLSA provenance + SBOM, keyless Sigstore, fail-closed verify).
+   (SLSA provenance + SBOM, keyless Sigstore, fail-closed verify). If the repo ships a
+   Claude Code plugin, this run also pushes the plugin's dependency-resolution tag —
+   see [Plugin Dependency Tags](../reference/plugin-dependency-tags.md).
 5. **Verify independently** from a clean checkout:
 
    ```sh
