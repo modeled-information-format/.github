@@ -114,10 +114,14 @@ credential that run already mints — no separate token or app is needed.
   'release'` (the `workflow_dispatch` path re-attests an already-released
   tag and must not attempt to re-create it) and additionally checks whether
   the tag ref already exists before creating it, so a retried or re-dispatched
-  run is a no-op rather than a failure. It also fails loudly, rather than
-  silently mistagging, if `plugin.json`'s `version` doesn't match the release
-  tag being attested (a forgotten version bump) or if `name`/`version` can't
-  be read at all.
+  run is a no-op rather than a failure — but only once it has peeled the
+  existing tag to its commit and confirmed that commit matches the release
+  commit being attested; a mismatch (e.g. someone hand-created the tag
+  against the wrong commit) fails the run loudly instead of silently leaving
+  dependents resolving to an unreviewed, unattested commit. It also fails
+  loudly, rather than silently mistagging, if `plugin.json`'s `version` does
+  not match the release tag being attested (a forgotten version bump) or if
+  `name`/`version` cannot be read at all.
 - **`mif-docs-plugin`** (plugin `mif-docs`) and **`gdlc`** (seven plugins)
   follow the same shape in their own `release.yml`: the job that already runs
   at the release commit gains a step that reads the relevant `plugin.json`
