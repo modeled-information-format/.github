@@ -206,12 +206,34 @@ class ExternalEntries(unittest.TestCase):
         entries = cu.external_entries(mp, None)
         self.assertEqual([i for i, _ in entries], [1])
 
-    def test_external_entry_from_a_DIFFERENT_repo_is_never_excluded(self):
+    def test_external_entry_from_a_different_repo_is_never_excluded(self):
         # own_repo must only exclude a TRUE self-reference, never an unrelated
         # external entry that happens to share no relation to the marketplace.
         mp = json.loads(FIXTURE)
         entries = cu.external_entries(mp, "someone-else/unrelated-repo")
         self.assertEqual([i for i, _ in entries], [1])
+
+    def test_self_hosting_exclusion_normalizes_trailing_slash_and_case(self):
+        # own_repo can arrive from a repository_dispatch client_payload with a
+        # trailing slash or different case; source_repo() already normalizes
+        # its side, own_repo must be normalized the same way or the exclusion
+        # silently stops matching and the original crash reappears.
+        mp = json.loads("""
+        {
+          "name": "mif-docs",
+          "plugins": [
+            {
+              "name": "mif-docs",
+              "source": {
+                "source": "github",
+                "repo": "Modeled-Information-Format/Mif-Docs-Plugin"
+              }
+            }
+          ]
+        }
+        """)
+        entries = cu.external_entries(mp, "modeled-information-format/mif-docs-plugin/")
+        self.assertEqual(entries, [])
 
 
 class ParsePredicates(unittest.TestCase):

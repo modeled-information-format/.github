@@ -84,12 +84,17 @@ def external_entries(marketplace: dict, own_repo: str | None = None) -> list[tup
     marketplace.json is a discover() target) and tried to re-pin a source with no
     sha, crashing with "sha '' not found in entry" on every scheduled run.
     """
+    # Normalize the same way source_repo() normalizes its own inputs (trim +
+    # strip trailing slash), case-folded — otherwise a caller passing
+    # "Owner/Repo/" (easy via a repository_dispatch client_payload) would fail
+    # to match and silently reintroduce the exact crash this exclusion fixes.
+    own_repo_norm = own_repo.strip().strip("/").casefold() if own_repo else None
     out = []
     for i, plugin in enumerate(marketplace.get("plugins", [])):
         src = plugin.get("source")
         if not isinstance(src, dict) or src.get("source") not in EXTERNAL_KINDS:
             continue
-        if own_repo and source_repo(src) == own_repo:
+        if own_repo_norm and source_repo(src).casefold() == own_repo_norm:
             continue
         out.append((i, plugin))
     return out

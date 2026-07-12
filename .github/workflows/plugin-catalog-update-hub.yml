@@ -63,7 +63,11 @@ jobs:
         id: build
         env:
           GH_TOKEN: ${{ steps.token.outputs.token }}
-          ONLY_REPO: ${{ inputs.repo || github.event.client_payload.repo }}
+          # Explicit '' fallback: on schedule/other non-dispatch triggers,
+          # both inputs.repo and client_payload.repo are undefined, and with
+          # set -u below a genuinely-unset env var (rather than one merely
+          # empty) would abort this step instead of running the full scan.
+          ONLY_REPO: ${{ inputs.repo || github.event.client_payload.repo || '' }}
         run: |
           set -euo pipefail
           # Deny-list: YAML list items under `deny:`; dep-free parse.
