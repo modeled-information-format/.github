@@ -3,6 +3,8 @@
 
 import json
 import unittest
+from types import SimpleNamespace
+from unittest.mock import patch
 
 import catalog_update as cu
 
@@ -297,6 +299,29 @@ class RenderBody(unittest.TestCase):
         self.assertIn("--signer-workflow owner/.github/.github/workflows/reusable-attest-scan.yml", body)
 
 
+
+
+class ApprovePr(unittest.TestCase):
+    """approve_pr() posts an approving review under a DIFFERENT identity's
+    token (a bot can never approve its own PR) and reports success/failure
+    so a caller can warn rather than silently proceed on a PR that may still
+    be stuck on the review requirement."""
+
+    def test_success_calls_gh_with_overridden_env_and_returns_true(self):
+        with patch.object(cu, "gh", return_value=SimpleNamespace(returncode=0)) as mock_gh:
+            ok = cu.approve_pr("owner/repo", "42", "the-approve-token")
+        self.assertTrue(ok)
+        mock_gh.assert_called_once()
+        args, kwargs = mock_gh.call_args
+        self.assertEqual(args[:5], ("pr", "review", "42", "--repo", "owner/repo"))
+        self.assertIn("--approve", args)
+        self.assertEqual(kwargs["env"], {"GH_TOKEN": "the-approve-token"})
+        self.assertFalse(kwargs["check"])
+
+    def test_failure_returns_false(self):
+        with patch.object(cu, "gh", return_value=SimpleNamespace(returncode=1)):
+            ok = cu.approve_pr("owner/repo", "42", "the-approve-token")
+        self.assertFalse(ok)
 
 
 class SourceRepo(unittest.TestCase):

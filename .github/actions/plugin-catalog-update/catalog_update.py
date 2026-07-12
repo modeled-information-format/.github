@@ -473,6 +473,21 @@ def branch_slug(plugin_name: str) -> str:
     return slug or "plugin"
 
 
+def approve_pr(repo: str, num: str, approve_token: str) -> bool:
+    """Post an approving review under a DIFFERENT identity's token.
+
+    Returns whether the review call itself succeeded, so a caller can warn
+    rather than silently proceed to auto-merge on a PR that may still be
+    stuck on the review requirement (a swallowed failure here reproduces the
+    exact original bug — a PR left at reviewDecision=REVIEW_REQUIRED with no
+    signal that anything needs attention).
+    """
+    res = gh("pr", "review", num, "--repo", repo, "--approve",
+             "--body", "Attestations verified, catalog-admission passed — mechanical re-pin.",
+             env={"GH_TOKEN": approve_token}, check=False)
+    return res.returncode == 0
+
+
 def open_pr(repo: str, plugin_name: str, new_text: str, marketplace_path: str,
             new_ref: str, body: str, approve_token: str | None = None) -> None:
     """Branch, commit the single-entry re-pin, push, open PR, enable auto-merge.
@@ -519,10 +534,12 @@ def open_pr(repo: str, plugin_name: str, new_text: str, marketplace_path: str,
                "--title", title, "--body-file", body_file, check=False)
             num = pr_number()
         if num:
-            if approve_token:
-                gh("pr", "review", num, "--repo", repo, "--approve",
-                   "--body", "Attestations verified, catalog-admission passed — mechanical re-pin.",
-                   env={"GH_TOKEN": approve_token}, check=False)
+            if approve_token and not approve_pr(repo, num, approve_token):
+                log_warning(
+                    f"{plugin_name}: could not post an approving review on PR #{num} — "
+                    "auto-merge will still be requested, but the PR may remain stuck on "
+                    "the review requirement until someone approves it manually"
+                )
             gh("pr", "merge", num, "--repo", repo, "--auto", "--squash", check=False)
         else:
             log_warning(f"{plugin_name}: could not resolve a PR number on {branch} — auto-merge not enabled")
@@ -625,10 +642,6 @@ def main(argv: list[str]) -> int:
     ap.add_argument("--marketplace", default=".claude-plugin/marketplace.json")
     ap.add_argument("--predicates", default=DEFAULT_PREDICATES)
     ap.add_argument("--dry-run", action="store_true")
-    ap.add_argument("--approve-token", default=None,
-                    help="Token of a DIFFERENT identity to post an approving review with "
-                         "(a bot can never approve its own PR); required when the target "
-                         "repo's branch protection has required_approving_review_count > 0")
     args = ap.parse_args(argv)
 
     try:
@@ -637,7 +650,12 @@ def main(argv: list[str]) -> int:
         print(f"::error::{exc}")
         return 1
     if args.mode == "update":
-        return mode_update(args.repo, args.marketplace, predicates, args.dry_run, args.approve_token)
+        # Read from the environment, never argv: a token in a CLI arg can
+        # surface in process listings and some diagnostic logs. Matches
+        # reusable-dependabot-automerge.yml, which keeps its App token in
+        # GH_TOKEN env only.
+        approve_token = os.environ.get("APPROVE_TOKEN") or None
+        return mode_update(args.repo, args.marketplace, predicates, args.dry_run, approve_token)
     return mode_verify(args.repo, args.marketplace, predicates)
 
 

@@ -70,9 +70,13 @@ runs:
         MARKETPLACE_PATH: ${{ inputs.marketplace-path }}
         PREDICATE_TYPES: ${{ inputs.predicate-types }}
         DRY_RUN: ${{ inputs.dry-run }}
+        # NOT passed as a CLI arg (unlike the others above): a token in argv
+        # can surface in process listings and some diagnostic logs. The
+        # script reads APPROVE_TOKEN from its own environment instead —
+        # matches reusable-dependabot-automerge.yml, which keeps its App
+        # token in GH_TOKEN env only, never argv.
         APPROVE_TOKEN: ${{ inputs.approve-token }}
       run: |
         args=(--mode "$MODE" --repo "$REPO" --marketplace "$MARKETPLACE_PATH" --predicates "$PREDICATE_TYPES")
         if [ "$DRY_RUN" = "true" ]; then args+=(--dry-run); fi
-        if [ -n "$APPROVE_TOKEN" ]; then args+=(--approve-token "$APPROVE_TOKEN"); fi
         python3 "${GITHUB_ACTION_PATH}/catalog_update.py" "${args[@]}"
