@@ -129,6 +129,22 @@ jobs:
           owner: ${{ github.repository_owner }}
           repositories: ${{ matrix.name }}
 
+      # A distinct identity to approve the PR the catalog App just opened — a
+      # bot can never approve its own PR, and a target repo whose branch
+      # protection requires an approving review otherwise leaves the PR
+      # permanently stuck in auto-merge's queue (bypass_pull_request_allowances
+      # does not exempt that queue's review check, only a direct merge call).
+      # Same App reusable-dependabot-automerge.yml already uses for exactly
+      # this purpose.
+      - name: Mint approval App token (scoped to this target repo)
+        id: approve_token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          client-id: ${{ vars.AUTOMERGE_CLIENT_APP_ID }}
+          private-key: ${{ secrets.AUTOMERGE_CLIENT_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: ${{ matrix.name }}
+
       - name: Checkout target marketplace
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
@@ -149,4 +165,5 @@ jobs:
           repo: ${{ matrix.repo }}
           marketplace-path: ${{ matrix.marketplace }}
           github-token: ${{ steps.token.outputs.token }}
+          approve-token: ${{ steps.approve_token.outputs.token }}
           dry-run: ${{ inputs.dry-run || false }}

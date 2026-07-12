@@ -49,13 +49,21 @@ SHA_RE = re.compile(r"^[0-9a-f]{40}$")
 # --------------------------------------------------------------------------- #
 # gh / shell helpers
 # --------------------------------------------------------------------------- #
-def gh(*args: str, check: bool = True, capture: bool = True) -> subprocess.CompletedProcess:
-    """Run `gh` and return the completed process."""
+def gh(*args: str, check: bool = True, capture: bool = True,
+       env: dict[str, str] | None = None) -> subprocess.CompletedProcess:
+    """Run `gh` and return the completed process.
+
+    `env`, when given, is merged over the current process environment for
+    THIS call only — used to run a single `gh` invocation (approving a PR)
+    under a different GH_TOKEN identity than the rest of the script.
+    """
+    run_env = {**os.environ, **env} if env else None
     return subprocess.run(
         ["gh", *args],
         check=check,
         capture_output=capture,
         text=True,
+        env=run_env,
     )
 
 
@@ -466,8 +474,21 @@ def branch_slug(plugin_name: str) -> str:
 
 
 def open_pr(repo: str, plugin_name: str, new_text: str, marketplace_path: str,
-            new_ref: str, body: str) -> None:
-    """Branch, commit the single-entry re-pin, push, open PR, enable auto-merge."""
+            new_ref: str, body: str, approve_token: str | None = None) -> None:
+    """Branch, commit the single-entry re-pin, push, open PR, enable auto-merge.
+
+    `approve_token`, when given, is a DIFFERENT identity's token (the org
+    automerge App — the same one reusable-dependabot-automerge.yml uses,
+    since a bot can never approve its own PR) used to post an actual
+    approving review. Without this, a repo whose branch protection requires
+    an approving review count > 0 leaves the PR permanently stuck: GitHub's
+    auto-merge queue waits for every required condition including reviews,
+    and a `bypass_pull_request_allowances` entry for the PR's own author App
+    does NOT exempt the auto-merge queue from that check (confirmed
+    empirically — issue: PR opened by this exact mechanism sat blocked with
+    reviewDecision=REVIEW_REQUIRED despite the author App already being on
+    the bypass list). A real review record is the only thing that works.
+    """
     branch = f"deps/external-plugin/{branch_slug(plugin_name)}"
     base = default_branch(repo)
     git("switch", "-C", branch, f"origin/{base}")
@@ -498,6 +519,10 @@ def open_pr(repo: str, plugin_name: str, new_text: str, marketplace_path: str,
                "--title", title, "--body-file", body_file, check=False)
             num = pr_number()
         if num:
+            if approve_token:
+                gh("pr", "review", num, "--repo", repo, "--approve",
+                   "--body", "Attestations verified, catalog-admission passed — mechanical re-pin.",
+                   env={"GH_TOKEN": approve_token}, check=False)
             gh("pr", "merge", num, "--repo", repo, "--auto", "--squash", check=False)
         else:
             log_warning(f"{plugin_name}: could not resolve a PR number on {branch} — auto-merge not enabled")
@@ -507,7 +532,7 @@ def open_pr(repo: str, plugin_name: str, new_text: str, marketplace_path: str,
 
 
 def mode_update(repo: str, marketplace_path: str, predicates: list[tuple[str, str | None]],
-                dry_run: bool) -> int:
+                dry_run: bool, approve_token: str | None = None) -> int:
     with open(marketplace_path, encoding="utf-8") as fh:
         raw = fh.read()
     mp = json.loads(raw)
@@ -554,7 +579,7 @@ def mode_update(repo: str, marketplace_path: str, predicates: list[tuple[str, st
                 print(body)
                 log_notice(f"[dry-run] would open auto-merge PR for {name}")
                 continue
-            open_pr(repo, name, new_text, marketplace_path, tag, body)
+            open_pr(repo, name, new_text, marketplace_path, tag, body, approve_token)
         except Exception as exc:  # noqa: BLE001 - isolate per-entry failures
             log_warning(f"{name}: update failed ({exc}) — skipping this entry")
     return 0
@@ -600,6 +625,10 @@ def main(argv: list[str]) -> int:
     ap.add_argument("--marketplace", default=".claude-plugin/marketplace.json")
     ap.add_argument("--predicates", default=DEFAULT_PREDICATES)
     ap.add_argument("--dry-run", action="store_true")
+    ap.add_argument("--approve-token", default=None,
+                    help="Token of a DIFFERENT identity to post an approving review with "
+                         "(a bot can never approve its own PR); required when the target "
+                         "repo's branch protection has required_approving_review_count > 0")
     args = ap.parse_args(argv)
 
     try:
@@ -608,7 +637,7 @@ def main(argv: list[str]) -> int:
         print(f"::error::{exc}")
         return 1
     if args.mode == "update":
-        return mode_update(args.repo, args.marketplace, predicates, args.dry_run)
+        return mode_update(args.repo, args.marketplace, predicates, args.dry_run, args.approve_token)
     return mode_verify(args.repo, args.marketplace, predicates)
 
 
