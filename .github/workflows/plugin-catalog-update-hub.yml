@@ -10,6 +10,14 @@ name: plugin-catalog-update-hub
 # App-install-scoped: opting a repo in = installing the App on it. The cross-repo
 # write credential is a per-target-scoped App token (least privilege); the
 # fail-closed catalog-admission gate in each target is the merge control.
+#
+# `plugin-released` repository_dispatch: a source plugin's own release.yml fires
+# this the moment it publishes, naming the MARKETPLACE repo to re-check in
+# client_payload.repo (e.g. mif-docs-plugin's release notifies
+# `modeled-information-format/claude-code-plugins`) — this is the marketplace
+# HOLDING the entry, not the plugin repo itself, same meaning as workflow_dispatch's
+# `repo` input. Without this, a new release only gets picked up by the next
+# Monday cron.
 
 "on":
   schedule:
@@ -24,6 +32,8 @@ name: plugin-catalog-update-hub
         description: "Limit the run to a single owner/repo (optional)"
         type: string
         default: ""
+  repository_dispatch:
+    types: [plugin-released]
 
 permissions:
   contents: read
@@ -53,7 +63,7 @@ jobs:
         id: build
         env:
           GH_TOKEN: ${{ steps.token.outputs.token }}
-          ONLY_REPO: ${{ inputs.repo }}
+          ONLY_REPO: ${{ inputs.repo || github.event.client_payload.repo }}
         run: |
           set -euo pipefail
           # Deny-list: YAML list items under `deny:`; dep-free parse.
