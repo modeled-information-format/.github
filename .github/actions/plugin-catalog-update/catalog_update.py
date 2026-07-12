@@ -74,13 +74,29 @@ def log_notice(msg: str) -> None:
 # --------------------------------------------------------------------------- #
 # marketplace parsing + the PURE, testable re-pin
 # --------------------------------------------------------------------------- #
-def external_entries(marketplace: dict) -> list[tuple[int, dict]]:
-    """Return (index, entry) for every external (object-source, sha-pinned) plugin."""
+def external_entries(marketplace: dict, own_repo: str | None = None) -> list[tuple[int, dict]]:
+    """Return (index, entry) for every external (object-source, sha-pinned) plugin.
+
+    Excludes a SELF-HOSTING entry — one whose `source.repo` is this marketplace's
+    OWN repo (a plugin's `.claude-plugin/marketplace.json` listing itself, always
+    current by definition and carrying no `sha` to pin). Without this, the hub's
+    full org scan matched every self-hosting plugin repo too (any repo with a
+    marketplace.json is a discover() target) and tried to re-pin a source with no
+    sha, crashing with "sha '' not found in entry" on every scheduled run.
+    """
+    # Normalize the same way source_repo() normalizes its own inputs (trim +
+    # strip trailing slash), case-folded — otherwise a caller passing
+    # "Owner/Repo/" (easy via a repository_dispatch client_payload) would fail
+    # to match and silently reintroduce the exact crash this exclusion fixes.
+    own_repo_norm = own_repo.strip().strip("/").casefold() if own_repo else None
     out = []
     for i, plugin in enumerate(marketplace.get("plugins", [])):
         src = plugin.get("source")
-        if isinstance(src, dict) and src.get("source") in EXTERNAL_KINDS:
-            out.append((i, plugin))
+        if not isinstance(src, dict) or src.get("source") not in EXTERNAL_KINDS:
+            continue
+        if own_repo_norm and source_repo(src).casefold() == own_repo_norm:
+            continue
+        out.append((i, plugin))
     return out
 
 
@@ -495,7 +511,7 @@ def mode_update(repo: str, marketplace_path: str, predicates: list[tuple[str, st
     with open(marketplace_path, encoding="utf-8") as fh:
         raw = fh.read()
     mp = json.loads(raw)
-    entries = external_entries(mp)
+    entries = external_entries(mp, repo)
     if not entries:
         log_notice(f"{repo}: no external plugin entries — nothing to update")
         return 0
@@ -544,11 +560,11 @@ def mode_update(repo: str, marketplace_path: str, predicates: list[tuple[str, st
     return 0
 
 
-def mode_verify(marketplace_path: str, predicates: list[tuple[str, str | None]]) -> int:
+def mode_verify(repo: str, marketplace_path: str, predicates: list[tuple[str, str | None]]) -> int:
     """Fail-closed verification of every external entry at its pinned ref."""
     with open(marketplace_path, encoding="utf-8") as fh:
         mp = json.load(fh)
-    entries = external_entries(mp)
+    entries = external_entries(mp, repo)
     if not entries:
         log_notice("no external plugin entries to verify")
         return 0
@@ -593,7 +609,7 @@ def main(argv: list[str]) -> int:
         return 1
     if args.mode == "update":
         return mode_update(args.repo, args.marketplace, predicates, args.dry_run)
-    return mode_verify(args.marketplace, predicates)
+    return mode_verify(args.repo, args.marketplace, predicates)
 
 
 if __name__ == "__main__":
