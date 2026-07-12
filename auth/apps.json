@@ -56,7 +56,7 @@
       ]
     },
     "automerge": {
-      "purpose": "Dependabot auto-approve and merge, and approving the catalog hub's own re-pin PRs. Neither Dependabot nor the catalog App can approve their own PR; this App supplies the non-author approval identity. Also reused (2026-07-12) by research-harness-template's monitor.yml/monitor-gate.yml (ADR-0019, Epic #416): its contents:write + pull_requests:write is the same set those workflows need to commit a monitoring review branch and open/merge-gate its PR, so no new app was provisioned.",
+      "purpose": "Dependabot auto-approve and merge, and approving the catalog hub's own re-pin PRs. Neither Dependabot nor the catalog App can approve their own PR; this App supplies the non-author approval identity. Also reused (2026-07-12) by research-harness-template's monitor.yml/monitor-gate.yml (research-harness-template's own ADR-0019, distinct from this org's ADR-019; Epic #416): its contents:write + pull_requests:write is the same set those workflows need to commit a monitoring review branch and open/merge-gate its PR, so no new app was provisioned.",
       "id_variable": "AUTOMERGE_CLIENT_APP_ID",
       "key_secret": "AUTOMERGE_CLIENT_APP_PRIVATE_KEY",
       "permissions": {
