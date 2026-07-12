@@ -49,13 +49,21 @@ SHA_RE = re.compile(r"^[0-9a-f]{40}$")
 # --------------------------------------------------------------------------- #
 # gh / shell helpers
 # --------------------------------------------------------------------------- #
-def gh(*args: str, check: bool = True, capture: bool = True) -> subprocess.CompletedProcess:
-    """Run `gh` and return the completed process."""
+def gh(*args: str, check: bool = True, capture: bool = True,
+       env: dict[str, str] | None = None) -> subprocess.CompletedProcess:
+    """Run `gh` and return the completed process.
+
+    `env`, when given, is merged over the current process environment for
+    THIS call only — used to run a single `gh` invocation (approving a PR)
+    under a different GH_TOKEN identity than the rest of the script.
+    """
+    run_env = {**os.environ, **env} if env else None
     return subprocess.run(
         ["gh", *args],
         check=check,
         capture_output=capture,
         text=True,
+        env=run_env,
     )
 
 
@@ -465,9 +473,37 @@ def branch_slug(plugin_name: str) -> str:
     return slug or "plugin"
 
 
+def approve_pr(repo: str, num: str, approve_token: str) -> bool:
+    """Post an approving review under a DIFFERENT identity's token.
+
+    Returns whether the review call itself succeeded, so a caller can warn
+    rather than silently proceed to auto-merge on a PR that may still be
+    stuck on the review requirement (a swallowed failure here reproduces the
+    exact original bug — a PR left at reviewDecision=REVIEW_REQUIRED with no
+    signal that anything needs attention).
+    """
+    res = gh("pr", "review", num, "--repo", repo, "--approve",
+             "--body", "Attestations verified, catalog-admission passed — mechanical re-pin.",
+             env={"GH_TOKEN": approve_token}, check=False)
+    return res.returncode == 0
+
+
 def open_pr(repo: str, plugin_name: str, new_text: str, marketplace_path: str,
-            new_ref: str, body: str) -> None:
-    """Branch, commit the single-entry re-pin, push, open PR, enable auto-merge."""
+            new_ref: str, body: str, approve_token: str | None = None) -> None:
+    """Branch, commit the single-entry re-pin, push, open PR, enable auto-merge.
+
+    `approve_token`, when given, is a DIFFERENT identity's token (the org
+    automerge App — the same one reusable-dependabot-automerge.yml uses,
+    since a bot can never approve its own PR) used to post an actual
+    approving review. Without this, a repo whose branch protection requires
+    an approving review count > 0 leaves the PR permanently stuck: GitHub's
+    auto-merge queue waits for every required condition including reviews,
+    and a `bypass_pull_request_allowances` entry for the PR's own author App
+    does NOT exempt the auto-merge queue from that check (confirmed
+    empirically — issue: PR opened by this exact mechanism sat blocked with
+    reviewDecision=REVIEW_REQUIRED despite the author App already being on
+    the bypass list). A real review record is the only thing that works.
+    """
     branch = f"deps/external-plugin/{branch_slug(plugin_name)}"
     base = default_branch(repo)
     git("switch", "-C", branch, f"origin/{base}")
@@ -498,6 +534,12 @@ def open_pr(repo: str, plugin_name: str, new_text: str, marketplace_path: str,
                "--title", title, "--body-file", body_file, check=False)
             num = pr_number()
         if num:
+            if approve_token and not approve_pr(repo, num, approve_token):
+                log_warning(
+                    f"{plugin_name}: could not post an approving review on PR #{num} — "
+                    "auto-merge will still be requested, but the PR may remain stuck on "
+                    "the review requirement until someone approves it manually"
+                )
             gh("pr", "merge", num, "--repo", repo, "--auto", "--squash", check=False)
         else:
             log_warning(f"{plugin_name}: could not resolve a PR number on {branch} — auto-merge not enabled")
@@ -507,7 +549,7 @@ def open_pr(repo: str, plugin_name: str, new_text: str, marketplace_path: str,
 
 
 def mode_update(repo: str, marketplace_path: str, predicates: list[tuple[str, str | None]],
-                dry_run: bool) -> int:
+                dry_run: bool, approve_token: str | None = None) -> int:
     with open(marketplace_path, encoding="utf-8") as fh:
         raw = fh.read()
     mp = json.loads(raw)
@@ -554,7 +596,7 @@ def mode_update(repo: str, marketplace_path: str, predicates: list[tuple[str, st
                 print(body)
                 log_notice(f"[dry-run] would open auto-merge PR for {name}")
                 continue
-            open_pr(repo, name, new_text, marketplace_path, tag, body)
+            open_pr(repo, name, new_text, marketplace_path, tag, body, approve_token)
         except Exception as exc:  # noqa: BLE001 - isolate per-entry failures
             log_warning(f"{name}: update failed ({exc}) — skipping this entry")
     return 0
@@ -608,7 +650,12 @@ def main(argv: list[str]) -> int:
         print(f"::error::{exc}")
         return 1
     if args.mode == "update":
-        return mode_update(args.repo, args.marketplace, predicates, args.dry_run)
+        # Read from the environment, never argv: a token in a CLI arg can
+        # surface in process listings and some diagnostic logs. Matches
+        # reusable-dependabot-automerge.yml, which keeps its App token in
+        # GH_TOKEN env only.
+        approve_token = os.environ.get("APPROVE_TOKEN") or None
+        return mode_update(args.repo, args.marketplace, predicates, args.dry_run, approve_token)
     return mode_verify(args.repo, args.marketplace, predicates)
 
 

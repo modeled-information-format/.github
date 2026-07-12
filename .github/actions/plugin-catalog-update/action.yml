@@ -36,6 +36,17 @@ inputs:
     description: 'Resolve + verify + render, but open/merge nothing'
     required: false
     default: 'false'
+  approve-token:
+    description: >-
+      Token of a DIFFERENT identity to approve the opened PR with (a bot can
+      never approve its own PR). Required whenever the target repo's branch
+      protection has required_approving_review_count > 0 — GitHub's
+      auto-merge queue waits on that condition regardless of any
+      bypass_pull_request_allowances entry for github-token's own App.
+      Empty = skip the approval call (verify mode never opens a PR, so this
+      is a no-op there either way).
+    required: false
+    default: ''
 
 runs:
   using: composite
@@ -59,6 +70,12 @@ runs:
         MARKETPLACE_PATH: ${{ inputs.marketplace-path }}
         PREDICATE_TYPES: ${{ inputs.predicate-types }}
         DRY_RUN: ${{ inputs.dry-run }}
+        # NOT passed as a CLI arg (unlike the others above): a token in argv
+        # can surface in process listings and some diagnostic logs. The
+        # script reads APPROVE_TOKEN from its own environment instead —
+        # matches reusable-dependabot-automerge.yml, which keeps its App
+        # token in GH_TOKEN env only, never argv.
+        APPROVE_TOKEN: ${{ inputs.approve-token }}
       run: |
         args=(--mode "$MODE" --repo "$REPO" --marketplace "$MARKETPLACE_PATH" --predicates "$PREDICATE_TYPES")
         if [ "$DRY_RUN" = "true" ]; then args+=(--dry-run); fi
