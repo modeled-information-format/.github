@@ -49,7 +49,7 @@ jobs:
     name: package + attest provenance/SBOM
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write # push the plugin-dependency tag (git refs API) on a real release
       id-token: write # keyless Sigstore signing
       attestations: write # persist the attestations
     outputs:
