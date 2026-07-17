@@ -59,6 +59,12 @@ jobs:
       id-token: write          # publish to OpenSSF API
       contents: read
       actions: read
+    env:
+      # 'true' when the caller passed the app-private-key secret. The secrets
+      # context is not allowed in step-level `if:` (actionlint enforces the
+      # documented context-availability table), so the presence check is
+      # hoisted here — only the boolean lands in the job env, never the key.
+      HAS_APP_PRIVATE_KEY: ${{ secrets.app-private-key != '' }}
     steps:
       - name: Checkout
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
@@ -67,12 +73,14 @@ jobs:
 
       # Mint an org CI App installation token so Scorecard can read branch
       # protection (administration:read) — the default GITHUB_TOKEN cannot, which
-      # caps the Branch-Protection check. Gated on the App-id var (secrets cannot
-      # be used in `if:`); fails soft via continue-on-error when no private key is
-      # passed, and repo_token below falls back to GITHUB_TOKEN.
+      # caps the Branch-Protection check. Gated on both the App-id var and the
+      # app-private-key secret (via HAS_APP_PRIVATE_KEY above), so the step is
+      # skipped — not red — when a caller omits the key.
+      # continue-on-error stays: a genuine mint failure (e.g. a rotated or invalid
+      # key) still soft-fails, and repo_token below falls back to GITHUB_TOKEN.
       - name: Mint CI App token (Branch-Protection read)
         id: app-token
-        if: ${{ vars.CI_CLIENT_APP_ID != '' }}
+        if: ${{ vars.CI_CLIENT_APP_ID != '' && env.HAS_APP_PRIVATE_KEY == 'true' }}
         continue-on-error: true
         uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
         with:
