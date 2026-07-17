@@ -81,6 +81,7 @@
       },
       "install_on": "all",
       "consumers": [
+        ".github/.github/workflows/attest-release.yml",
         "MIF/.github/workflows/release.yml",
         "ontologies/.github/workflows/release.yml",
         "research-harness-template/.github/workflows/release.yml",

@@ -12,45 +12,69 @@ name: attest-release
 # DAST is intentionally NOT attested here: this repo has no deployed target, so
 # there is no DAST evidence to bind. App repos attest their own DAST verdict.
 #
-# Runs automatically on release publish; re-attest an existing tag (e.g. v0.1.0)
-# via workflow_dispatch. (Dispatch caveat: SAST scans the commit that triggered
-# the run; for the release-published flow that is the tag's commit.)
+# Release creation is FAIL-CLOSED and happens LAST (modeled-information-format/.github#35):
+# build -> attest (provenance + SBOM + SAST seam) -> verify -> publish. GitHub
+# immutable releases reject any asset upload AFTER a release is published
+# (`Cannot upload assets to an immutable release`), and deleting an immutable
+# release permanently burns its tag (`tag_name was used by an immutable
+# release`) — so this workflow never creates a release and uploads to it
+# afterward. Instead it triggers on the TAG PUSH itself, builds and attests the
+# artifact, fail-closed re-verifies every attestation, and only then creates the
+# release with the attested tarball + SBOM already attached in the same
+# `gh release create` call. This matches the org's documented attested-delivery
+# "Caller recipe D" (fail-closed BEFORE the release exists) and the pattern
+# already proven in the `ontologies` and `research-harness-template` release
+# workflows.
+#
+# `workflow_dispatch` exercises build -> attest -> verify as a dry-run without
+# publishing anything (no tag push, no release) — the same dry-run contract
+# every attested-delivery release workflow in this org uses.
 
 "on":
-  release:
-    types: [published]
-  workflow_dispatch:
-    inputs:
-      tag:
-        description: "Existing release tag to (re)attest (e.g. v0.1.0)"
-        required: true
-        type: string
+  push:
+    tags:
+      - "v*.*.*"
+  workflow_dispatch: {}
 
 permissions:
   contents: read
 
 jobs:
+  # ---------------------------------------------------------------------------
+  # Package: build the source tarball, generate + attest its SBOM, attest SLSA
+  # build provenance. Never touches an existing release — nothing here can
+  # collide with an immutable release, since no release exists yet.
+  # ---------------------------------------------------------------------------
   package:
     name: package + attest provenance/SBOM
     runs-on: ubuntu-latest
     permissions:
-      contents: write # upload assets to the release
+      contents: read
       id-token: write # keyless Sigstore signing
       attestations: write # persist the attestations
     outputs:
+      tag: ${{ steps.tag.outputs.tag }}
+      version: ${{ steps.tag.outputs.version }}
+      artifact: ${{ steps.pkg.outputs.artifact }}
+      sbom: ${{ steps.pkg.outputs.sbom }}
       subject-name: ${{ steps.digest.outputs.subject-name }}
       subject-digest: ${{ steps.digest.outputs.subject-digest }}
     steps:
       - name: Resolve tag
         id: tag
         env:
-          EVENT_TAG: ${{ github.event.release.tag_name }}
-          INPUT_TAG: ${{ inputs.tag }}
+          EVENT_NAME: ${{ github.event_name }}
+          REF_NAME: ${{ github.ref_name }}
         run: |
           set -euo pipefail
-          TAG="${INPUT_TAG:-${EVENT_TAG}}"
+          if [ "${EVENT_NAME}" = "push" ]; then
+            TAG="${REF_NAME}"
+          else
+            # workflow_dispatch dry-run: no tag exists yet, exercise the chain
+            # against the current commit without resolving a release version.
+            TAG="dryrun-${GITHUB_SHA::7}"
+          fi
           TAG="${TAG#refs/tags/}"   # accept a full ref; reduce to the tag name
-          [ -n "${TAG}" ] || { echo "::error::no release tag resolved"; exit 1; }
           case "${TAG}" in
             */*) echo "::error::invalid tag '${TAG}' (must be a bare tag name, no '/')"; exit 1 ;;
           esac
@@ -60,13 +84,12 @@ jobs:
       - name: Checkout at the tag
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
-          ref: ${{ steps.tag.outputs.tag }}
+          ref: ${{ github.event_name == 'push' && steps.tag.outputs.tag || github.sha }}
 
       - name: Push plugin-dependency tag
-        # Only on the real release-published event: workflow_dispatch is for
-        # re-attesting an already-released tag, so the dependency tag for that
-        # version should already exist and must not be re-pushed here.
-        if: github.event_name == 'release'
+        # Only on the real tag-push event: workflow_dispatch is a dry-run with
+        # no release tag, so there is nothing to pin a dependency tag to.
+        if: github.event_name == 'push'
         env:
           GH_TOKEN: ${{ github.token }}
           RELEASE_VERSION: ${{ steps.tag.outputs.version }}
@@ -121,7 +144,7 @@ jobs:
         run: |
           set -euo pipefail
           ART="modeled-information-format-${VERSION}.tar.gz"
-          git archive --format=tar.gz --prefix="modeled-information-format-${VERSION}/" -o "${ART}" "${TAG}"
+          git archive --format=tar.gz --prefix="modeled-information-format-${VERSION}/" -o "${ART}" HEAD
           echo "artifact=${ART}" >>"${GITHUB_OUTPUT}"
           echo "sbom=${ART}.cyclonedx.json" >>"${GITHUB_OUTPUT}"
           sha256sum "${ART}"
@@ -155,13 +178,14 @@ jobs:
           subject-path: ${{ steps.pkg.outputs.artifact }}
           sbom-path: ${{ steps.pkg.outputs.sbom }}
 
-      - name: Upload artifact + SBOM to the release
-        env:
-          GH_TOKEN: ${{ github.token }}
-          TAG: ${{ steps.tag.outputs.tag }}
-          ART: ${{ steps.pkg.outputs.artifact }}
-          SBOM: ${{ steps.pkg.outputs.sbom }}
-        run: gh release upload "${TAG}" "${ART}" "${SBOM}" --clobber
+      - name: Upload build artifacts (for the publish job)
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: release-assets
+          path: |
+            ${{ steps.pkg.outputs.artifact }}
+            ${{ steps.pkg.outputs.sbom }}
+          if-no-files-found: error
 
   sast:
     name: sast (release evidence)
@@ -187,3 +211,98 @@ jobs:
       predicate-type: https://modeled-information-format.github.io/attestations/sast/v1
       predicate-artifact: ${{ needs.sast.outputs.sarif-artifact }}
       predicate-filename: ${{ needs.sast.outputs.sarif-filename }}
+
+  # ---------------------------------------------------------------------------
+  # Verify: FAIL-CLOSED re-verification of every attestation, BEFORE any release
+  # is created. Nothing is published unless this passes.
+  # ---------------------------------------------------------------------------
+  verify:
+    name: verify attestations (fail-closed)
+    needs: [package, attest-sast]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      attestations: read
+    steps:
+      - name: Download build artifacts
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: release-assets
+
+      - name: Fail-closed attestation verification
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ART: ${{ needs.package.outputs.artifact }}
+          SEAM: modeled-information-format/.github/.github/workflows/reusable-attest-scan.yml
+        run: |
+          set -euo pipefail
+
+          echo "=== Verifying: ${ART} ==="
+
+          echo "[1/3] SLSA build provenance..."
+          gh attestation verify "${ART}" \
+            --repo "${GITHUB_REPOSITORY}" \
+            --signer-workflow "${GITHUB_REPOSITORY}/.github/workflows/attest-release.yml" \
+            --predicate-type "https://slsa.dev/provenance/v1"
+          echo "PASS: build provenance"
+
+          echo "[2/3] SBOM attestation..."
+          gh attestation verify "${ART}" \
+            --repo "${GITHUB_REPOSITORY}" \
+            --signer-workflow "${GITHUB_REPOSITORY}/.github/workflows/attest-release.yml" \
+            --predicate-type "https://cyclonedx.org/bom"
+          echo "PASS: SBOM attestation"
+
+          echo "[3/3] SAST verdict (seam)..."
+          gh attestation verify "${ART}" \
+            --owner "${{ github.repository_owner }}" \
+            --signer-workflow "${SEAM}" \
+            --predicate-type "https://modeled-information-format.github.io/attestations/sast/v1"
+          echo "PASS: SAST verdict"
+
+          echo ""
+          echo "All attestations verified. Proceeding to publish."
+
+  # ---------------------------------------------------------------------------
+  # Publish: create the GitHub Release with the attested tarball + SBOM already
+  # attached in the SAME `gh release create` call — never a post-publish
+  # upload. Gated on `verify` succeeding AND a real tag push (never on a
+  # workflow_dispatch dry-run), so nothing unattested or unverified is ever
+  # published, and nothing is ever uploaded to a release that already exists.
+  # ---------------------------------------------------------------------------
+  publish:
+    name: publish release (attested assets attached at creation)
+    if: github.event_name == 'push'
+    needs: [package, verify]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read # release creation uses the release App token, not GITHUB_TOKEN
+    steps:
+      - name: Download build artifacts
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: release-assets
+
+      - name: Mint release app token (publish identity)
+        id: release_token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          client-id: ${{ vars.RELEASE_CLIENT_APP_ID }}
+          private-key: ${{ secrets.RELEASE_CLIENT_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: ${{ github.event.repository.name }}
+          # Down-scope the minted token: release creation only needs contents:write.
+          permission-contents: write
+
+      - name: Create GitHub Release (assets attached at creation)
+        env:
+          GH_TOKEN: ${{ steps.release_token.outputs.token }}
+          TAG: ${{ needs.package.outputs.tag }}
+          ART: ${{ needs.package.outputs.artifact }}
+          SBOM: ${{ needs.package.outputs.sbom }}
+        run: |
+          set -euo pipefail
+          gh release create "${TAG}" "${ART}" "${SBOM}" \
+            --repo "${GITHUB_REPOSITORY}" \
+            --title "${TAG}" \
+            --generate-notes
