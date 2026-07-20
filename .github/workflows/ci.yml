@@ -13,4 +13,4 @@ jobs:
     name: actionlint
     permissions:
       contents: read
-    uses: modeled-information-format/.github/.github/workflows/reusable-actionlint.yml@63bbc0352a07d949c0d4c040e88bea39b5991ce7
+    uses: modeled-information-format/.github/.github/workflows/reusable-actionlint.yml@667ee7b3bc93a8789c65cb9b4fedc6d827fcd36a
