@@ -48,10 +48,14 @@ echo "   required checks: $(printf '%s\n' "${CONTEXTS[@]:-}" | grep -c . || true
 echo "== Enabling allow_auto_merge on $REPO =="
 gh api -X PATCH "/repos/$REPO" -F allow_auto_merge=true >/dev/null
 
-# The org CI App authors zero-touch re-pin PRs (catalog update hub) and cannot
-# approve its own PR, so it is allowed to BYPASS the required review. Human PRs
-# still need a review; the required status checks (incl. catalog-admission) remain
-# the gate for the App's auto-merge.
+# No identity bypasses the required review. The org's zero-touch merge paths
+# (catalog update hub, Dependabot) are gated by a genuine non-author approving
+# review from the `automerge` App (see reusable-dependabot-automerge.yml and
+# plugin-catalog-update-hub.yml) plus the required status checks below — never
+# by a review-bypass allowance. The retired `modeled-information-format-ci`
+# App (id 4139655, superseded by the six least-privilege Apps, ADR-011) must
+# never be listed here; it is removed and a bypass entry for it is dead
+# governance config (org/.github#80).
 gh api -X PUT "/repos/$REPO/branches/$BRANCH/protection" \
   -H "Accept: application/vnd.github+json" \
   --input - >/dev/null <<JSON
@@ -65,7 +69,7 @@ gh api -X PUT "/repos/$REPO/branches/$BRANCH/protection" \
     "bypass_pull_request_allowances": {
       "users": [],
       "teams": [],
-      "apps": ["modeled-information-format-ci"]
+      "apps": []
     }
   },
   "restrictions": null,

@@ -1,0 +1,60 @@
+# Repo-CI gate (not a reusable): fail if the retired `modeled-information-format-ci`
+# GitHub App (id 4139655) reappears anywhere in this repo outside its historical
+# record. That App is removed and superseded by the six least-privilege Apps
+# (`ci`/`catalog`/`pages`/`automerge`/`release`/`issues`, ADR-011) — a live
+# reference to it is dead governance config, not a merely stale comment. This
+# is the regression guard for org/.github#80: `branch-protection.sh` had
+# stamped the retired App into every onboarded repo's
+# `bypass_pull_request_allowances.apps`, and nothing caught it landing or
+# recurring.
+name: retired-identity-check
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  retired-identity-check:
+    name: retired-identity-check
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: No live reference to the retired modeled-information-format-ci App
+        run: |
+          set -euo pipefail
+          # Path exclusions: dedicated historical-record files, plus the one
+          # cosmetic non-comment usage (a git-commit-author string with no
+          # access/privilege implication). Each documents the retired App's
+          # past existence (ADR decision log, its one-time manifest/browser
+          # provisioning tool, the pre-provisioning RUNBOOK checklist) or is
+          # a label with no bearing on access; none is re-applied by any live
+          # workflow or script. A new path exclusion here must carry the same
+          # justification, not just silence a failing check.
+          EXCLUDES=(
+            ':!docs/adr'
+            ':!docs/onboarding/app/manifest.json'
+            ':!docs/onboarding/app/create-app.html'
+            ':!docs/onboarding/RUNBOOK.md'
+            ':!.github/actions/plugin-catalog-update/action.yml'
+          )
+          # Comment-line filter: a `#`-prefixed line (shell/YAML/etc.) is prose
+          # ABOUT the retired identity — e.g. this repo's own warning comment
+          # in branch-protection.sh — never a live config value; only
+          # non-comment lines can regress into dead governance config (e.g. a
+          # JSON `apps` array entry).
+          hits="$(git grep -n --fixed-strings 'modeled-information-format-ci' -- . "${EXCLUDES[@]}" \
+                    | grep -vE ':[0-9]+:[[:space:]]*#' || true)"
+          if [ -n "$hits" ]; then
+            echo "$hits"
+            echo "::error::retired modeled-information-format-ci App referenced outside its historical record or a comment — see org/.github#80"
+            exit 1
+          fi
+          echo "No live reference to the retired modeled-information-format-ci App."
