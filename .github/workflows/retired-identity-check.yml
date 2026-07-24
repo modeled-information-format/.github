@@ -44,6 +44,11 @@ jobs:
             ':!docs/onboarding/app/create-app.html'
             ':!docs/onboarding/RUNBOOK.md'
             ':!.github/actions/plugin-catalog-update/action.yml'
+            # This gate's own definition names the retired slug on non-comment
+            # lines (the step name, the grep pattern, the error/success echoes)
+            # — that is the detector's machinery, not dead governance config.
+            # Excluding it keeps the gate from failing on itself.
+            ':!.github/workflows/retired-identity-check.yml'
           )
           # Comment-line filter: a `#`-prefixed line (shell/YAML/etc.) is prose
           # ABOUT the retired identity — e.g. this repo's own warning comment
