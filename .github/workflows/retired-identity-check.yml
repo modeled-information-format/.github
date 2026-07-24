@@ -1,0 +1,74 @@
+# Repo-CI gate (not a reusable): fail if the retired `modeled-information-format-ci`
+# GitHub App (id 4139655) reappears anywhere in this repo outside its historical
+# record. That App is removed and superseded by the six least-privilege Apps
+# (`ci`/`catalog`/`pages`/`automerge`/`release`/`issues`, ADR-011) — a live
+# reference to it is dead governance config, not a merely stale comment. This
+# is the regression guard for org/.github#80: `branch-protection.sh` had
+# stamped the retired App into every onboarded repo's
+# `bypass_pull_request_allowances.apps`, and nothing caught it landing or
+# recurring.
+name: retired-identity-check
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  retired-identity-check:
+    name: retired-identity-check
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: No live reference to the retired modeled-information-format-ci App
+        run: |
+          set -euo pipefail
+          # Path exclusions: dedicated historical-record files, plus the one
+          # cosmetic non-comment usage (a git-commit-author string with no
+          # access/privilege implication). Each documents the retired App's
+          # past existence (ADR decision log, its one-time manifest/browser
+          # provisioning tool, the pre-provisioning RUNBOOK checklist, the
+          # branch-protection runbook's "Review-bypass allowances" section
+          # explaining why the default is empty, org/.github#82) or is a
+          # label with no bearing on access; none is re-applied by any live
+          # workflow or script. A new path exclusion here must carry the same
+          # justification, not just silence a failing check.
+          EXCLUDES=(
+            ':!docs/adr'
+            ':!docs/onboarding/app/manifest.json'
+            ':!docs/onboarding/app/create-app.html'
+            ':!docs/onboarding/RUNBOOK.md'
+            ':!docs/runbooks/branch-protection-runbook.md'
+            ':!.github/actions/plugin-catalog-update/action.yml'
+            # This gate's own definition names the retired slug on non-comment
+            # lines (the step name, the grep pattern, the error/success echoes)
+            # — that is the detector's machinery, not dead governance config.
+            # Excluding it keeps the gate from failing on itself.
+            ':!.github/workflows/retired-identity-check.yml'
+          )
+          # Comment-line filter: a `#`-prefixed line is prose ABOUT the retired
+          # identity — e.g. this repo's own warning comment in
+          # branch-protection.sh — only in file types where `#` is actually a
+          # comment delimiter (shell/YAML/etc.); only non-comment lines there
+          # can regress into dead governance config (e.g. a JSON `apps` array
+          # entry). Markdown is deliberately excluded from this filter: a
+          # `#`-prefixed line in a `.md` file is a heading, not a comment, so
+          # filtering it out would let a live reference reappear undetected in
+          # a Markdown heading.
+          non_md_hits="$(git grep -n --fixed-strings 'modeled-information-format-ci' -- . "${EXCLUDES[@]}" ':!*.md' \
+                    | grep -vE ':[0-9]+:[[:space:]]*#' || true)"
+          md_hits="$(git grep -n --fixed-strings 'modeled-information-format-ci' -- '*.md' "${EXCLUDES[@]}" || true)"
+          hits="$(printf '%s\n%s' "$non_md_hits" "$md_hits" | sed '/^$/d')"
+          if [ -n "$hits" ]; then
+            echo "$hits"
+            echo "::error::retired modeled-information-format-ci App referenced outside its historical record or a comment — see org/.github#80"
+            exit 1
+          fi
+          echo "No live reference to the retired modeled-information-format-ci App."

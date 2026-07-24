@@ -13,6 +13,13 @@
 #
 # Usage:
 #   bash branch-protection.sh <owner/repo> <branch> [required-check-context ...]
+#   # BYPASS_APPS overrides which GitHub App slugs may bypass the required
+#   # review (space/comma-separated). Default: empty — no identity bypasses
+#   # review org-wide (org/.github#80). Only set this for a repo with a
+#   # confirmed, sanctioned exception (org/.github#82's mif-rs case):
+#   #   BYPASS_APPS="dependabot" bash branch-protection.sh modeled-information-format/mif-rs main ...
+#   # NEVER pass the retired modeled-information-format-ci App (id 4139655,
+#   # ADR-011) here — a bypass entry for it is dead governance config.
 #   # Discover a repo's always-on PR contexts (paste them as args):
 #   #   gh api "/repos/<owner/repo>/commits/<a-recent-PR-head-sha>/check-runs" \
 #   #     --jq '.check_runs[] | select(.conclusion!="skipped") | .name' | sort -u
@@ -40,6 +47,14 @@ contexts_json="$(printf '%s\n' "${CONTEXTS[@]:-}" | python3 -c '
 import json,sys
 print(json.dumps([l for l in sys.stdin.read().splitlines() if l.strip()]))')"
 
+# Review-bypass App slugs (JSON array). Default: empty — no identity bypasses
+# review org-wide (see the comment below and org/.github#80). Override only
+# for a repo with a confirmed, sanctioned exception via BYPASS_APPS (space/
+# comma-separated), e.g. BYPASS_APPS="dependabot" for mif-rs (org/.github#82).
+bypass_apps_json="$(printf '%s' "${BYPASS_APPS-}" | python3 -c '
+import json,sys
+print(json.dumps([a for a in sys.stdin.read().replace(",", " ").split() if a]))')"
+
 echo "== Applying org-standard branch protection to $REPO@$BRANCH =="
 echo "   required checks: $(printf '%s\n' "${CONTEXTS[@]:-}" | grep -c . || true)"
 
@@ -48,10 +63,18 @@ echo "   required checks: $(printf '%s\n' "${CONTEXTS[@]:-}" | grep -c . || true
 echo "== Enabling allow_auto_merge on $REPO =="
 gh api -X PATCH "/repos/$REPO" -F allow_auto_merge=true >/dev/null
 
-# The org CI App authors zero-touch re-pin PRs (catalog update hub) and cannot
-# approve its own PR, so it is allowed to BYPASS the required review. Human PRs
-# still need a review; the required status checks (incl. catalog-admission) remain
-# the gate for the App's auto-merge.
+# By default, no identity bypasses the required review. The org's zero-touch
+# merge paths (catalog update hub, Dependabot) are gated by a genuine
+# non-author approving review from the `automerge` App (see
+# reusable-dependabot-automerge.yml and plugin-catalog-update-hub.yml) plus the
+# required status checks below — never by a review-bypass allowance. The
+# retired `modeled-information-format-ci` App (id 4139655, superseded by the
+# six least-privilege Apps, ADR-011) must never be listed here; it is removed
+# and a bypass entry for it is dead governance config (org/.github#80).
+#
+# BYPASS_APPS (above) is the sole sanctioned way to add an exception, and only
+# for a repo with a confirmed, documented reason — see the runbook's
+# "Review-bypass allowances" section (org/.github#82).
 gh api -X PUT "/repos/$REPO/branches/$BRANCH/protection" \
   -H "Accept: application/vnd.github+json" \
   --input - >/dev/null <<JSON
@@ -65,7 +88,7 @@ gh api -X PUT "/repos/$REPO/branches/$BRANCH/protection" \
     "bypass_pull_request_allowances": {
       "users": [],
       "teams": [],
-      "apps": ["modeled-information-format-ci"]
+      "apps": ${bypass_apps_json}
     }
   },
   "restrictions": null,
