@@ -6,6 +6,15 @@ namespace: _procedural/runbooks
 title: "Branch Protection Runbook"
 tags:
   - runbook
+provenance:
+  '@type': Provenance
+  agent: claude-code/claude-sonnet-5
+  wasGeneratedBy:
+    '@id': urn:mif:activity:claude-code-session:ee7af76f-5362-4cb2-a83d-8b11eae113dc
+    '@type': prov:Activity
+  trustLevel: user_stated
+  agentVersion: 2.1.218
+modified: '2026-07-24T16:42:50.168Z'
 ---
 
 # Branch Protection Runbook — Consistent Default-Branch Gates
@@ -94,6 +103,41 @@ The script is a declarative PUT of the standard above plus the contexts you pass
 the contexts list (each repo's own always-on checks); every other setting is
 identical across the org, which is the consistency this runbook guarantees.
 
+## Review-bypass allowances
+
+`required_pull_request_reviews.bypass_pull_request_allowances` lists identities
+that may merge without a required approving review. The org default is
+**empty — no identity bypasses review** (org/.github#80; the retired
+`modeled-information-format-ci` App, id `4139655`, had been stamped into this
+allowance across every onboarded repo, which was dead governance config once
+that App was superseded by the six least-privilege Apps of ADR-011). The
+script's `bypass_pull_request_allowances.apps` therefore defaults to `[]`.
+
+Set the `BYPASS_APPS` env var (space/comma-separated App slugs) only for a
+repo with a confirmed, documented exception. Known sanctioned override:
+
+| Repo | `BYPASS_APPS` | Why |
+| --- | --- | --- |
+| `mif-rs` | `dependabot` | The real, official GitHub Dependabot App (id `29110`) bypasses review for its own Dependabot PRs on this repo — confirmed intentional (org/.github#82), not drift. Required status checks still gate the merge. |
+
+This is a **per-repo opt-in, not an org-wide default.** Whether `dependabot`
+review-bypass should become the standard pattern for any repo with Dependabot
+auto-merge (rather than the `automerge`-App-approves-a-real-review pattern the
+rest of the org uses) is an open policy question, not decided here — raise it
+explicitly rather than assuming this table's one entry generalizes.
+
+```bash
+# Apply the default (no bypass):
+bash docs/onboarding/org/branch-protection.sh modeled-information-format/<repo> main "<ctx>" ...
+
+# Apply mif-rs's sanctioned exception explicitly:
+BYPASS_APPS="dependabot" bash docs/onboarding/org/branch-protection.sh modeled-information-format/mif-rs main "<ctx>" ...
+```
+
+**Never** re-run the script against a repo with an existing sanctioned
+exception without passing its `BYPASS_APPS` value — the script is a
+declarative PUT, so omitting it silently strips the exception back to empty.
+
 ## Verify
 
 ```bash
@@ -101,6 +145,7 @@ gh api "/repos/<owner/repo>/branches/main/protection" --jq '{
   approvals: .required_pull_request_reviews.required_approving_review_count,
   strict: .required_status_checks.strict,
   checks: (.required_status_checks.contexts | length),
+  bypass_apps: [.required_pull_request_reviews.bypass_pull_request_allowances.apps[]?.slug],
   force_push: .allow_force_pushes.enabled, deletions: .allow_deletions.enabled }'
 ```
 

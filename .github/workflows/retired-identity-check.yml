@@ -34,8 +34,10 @@ jobs:
           # cosmetic non-comment usage (a git-commit-author string with no
           # access/privilege implication). Each documents the retired App's
           # past existence (ADR decision log, its one-time manifest/browser
-          # provisioning tool, the pre-provisioning RUNBOOK checklist) or is
-          # a label with no bearing on access; none is re-applied by any live
+          # provisioning tool, the pre-provisioning RUNBOOK checklist, the
+          # branch-protection runbook's "Review-bypass allowances" section
+          # explaining why the default is empty, org/.github#82) or is a
+          # label with no bearing on access; none is re-applied by any live
           # workflow or script. A new path exclusion here must carry the same
           # justification, not just silence a failing check.
           EXCLUDES=(
@@ -43,6 +45,7 @@ jobs:
             ':!docs/onboarding/app/manifest.json'
             ':!docs/onboarding/app/create-app.html'
             ':!docs/onboarding/RUNBOOK.md'
+            ':!docs/runbooks/branch-protection-runbook.md'
             ':!.github/actions/plugin-catalog-update/action.yml'
             # This gate's own definition names the retired slug on non-comment
             # lines (the step name, the grep pattern, the error/success echoes)
