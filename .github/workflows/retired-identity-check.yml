@@ -50,13 +50,19 @@ jobs:
             # Excluding it keeps the gate from failing on itself.
             ':!.github/workflows/retired-identity-check.yml'
           )
-          # Comment-line filter: a `#`-prefixed line (shell/YAML/etc.) is prose
-          # ABOUT the retired identity — e.g. this repo's own warning comment
-          # in branch-protection.sh — never a live config value; only
-          # non-comment lines can regress into dead governance config (e.g. a
-          # JSON `apps` array entry).
-          hits="$(git grep -n --fixed-strings 'modeled-information-format-ci' -- . "${EXCLUDES[@]}" \
+          # Comment-line filter: a `#`-prefixed line is prose ABOUT the retired
+          # identity — e.g. this repo's own warning comment in
+          # branch-protection.sh — only in file types where `#` is actually a
+          # comment delimiter (shell/YAML/etc.); only non-comment lines there
+          # can regress into dead governance config (e.g. a JSON `apps` array
+          # entry). Markdown is deliberately excluded from this filter: a
+          # `#`-prefixed line in a `.md` file is a heading, not a comment, so
+          # filtering it out would let a live reference reappear undetected in
+          # a Markdown heading.
+          non_md_hits="$(git grep -n --fixed-strings 'modeled-information-format-ci' -- . "${EXCLUDES[@]}" ':!*.md' \
                     | grep -vE ':[0-9]+:[[:space:]]*#' || true)"
+          md_hits="$(git grep -n --fixed-strings 'modeled-information-format-ci' -- '*.md' "${EXCLUDES[@]}" || true)"
+          hits="$(printf '%s\n%s' "$non_md_hits" "$md_hits" | sed '/^$/d')"
           if [ -n "$hits" ]; then
             echo "$hits"
             echo "::error::retired modeled-information-format-ci App referenced outside its historical record or a comment — see org/.github#80"
