@@ -1,6 +1,6 @@
 ---
 title: "Supply-Chain Scanning (OSV, Secrets, Trivy, Checkov, VEX)"
-description: "The org's supply-chain scanning layer is delivered as five SHA-pinned reusable workflows — dependency vulnerabilities (OSV-Scanner + dependency-review), secret scanning (Gitleaks + TruffleHog), IaC/license scanning (Trivy), IaC policy-as-code (Checkov), and OpenVEX exploitability disposition. Most gates normalize on SARIF and the code-scanning required check is the merge gate; the hard-fail exceptions are verified live secrets, Trivy image vulnerabilities, and the dependency-review PR gate."
+description: "The org's supply-chain scanning layer is delivered as five SHA-pinned reusable workflows — dependency vulnerabilities (OSV-Scanner + dependency-review), secret scanning (Gitleaks + TruffleHog), IaC/license scanning (Trivy), IaC policy-as-code (Checkov), and OpenVEX exploitability disposition. Most gates normalize on SARIF and the code-scanning required check is the merge gate; the hard-fail exceptions are known OSV vulnerabilities, verified live secrets, Trivy image vulnerabilities, and the dependency-review PR gate."
 type: adr
 category: security
 tags:
@@ -210,8 +210,11 @@ workflow):
   `google/osv-scanner-action/osv-scanner-action` and `…/osv-reporter-action`
   (both `a345acffa64b0eaede81a3d9aae6141214d9c8fc`, v2.6.0), producing JSON →
   SARIF and uploading to the code-scanning hub. The scan step is
-  `continue-on-error: true` — an independent second opinion against the OSV
-  database, reported as a soft finding.
+  `continue-on-error: true`, so a scanner error alone does not stop the job,
+  but the reporter step runs with `--fail-on-vuln=true`: any known
+  vulnerability in a scanned lockfile **hard-fails the job** (the SARIF still
+  uploads). Accepted, justified exceptions go in the caller's
+  `osv-scanner.toml` `[[IgnoredVulns]]`.
 - Job `dependency-review` runs `actions/dependency-review-action`
   (`a1d282b36b6f3519aa1f3fc636f609c47dddb294`, v5.0.0) only on
   `pull_request`; it is a **hard PR gate** that fails when a PR introduces a
@@ -265,8 +268,9 @@ recorded in ADR-005.
 
 The architectural invariant: most gates normalize on SARIF and the
 code-scanning "Code scanning results" required check is the merge gate; the
-hard-fail exceptions are verified live secrets (TruffleHog), Trivy image
-vulnerabilities, and the dependency-review PR gate. VEX makes the soft-fail
+hard-fail exceptions are known OSV vulnerabilities (OSV-Scanner reporter),
+verified live secrets (TruffleHog), Trivy image vulnerabilities, and the
+dependency-review PR gate. VEX makes the soft-fail
 output actionable by recording exploitability disposition.
 
 ## Consequences
@@ -308,8 +312,9 @@ output actionable by recording exploitability disposition.
 Each repo wires the supply-chain gates it needs by calling the reusable
 workflows at a pinned org SHA. Dependency, secret, IaC misconfiguration,
 license, and policy findings normalize on SARIF and land in the code-scanning
-hub, where the required check is the merge gate; verified secrets, Trivy image
-vulnerabilities, and the dependency-review PR gate hard-fail. The VEX gate
+hub, where the required check is the merge gate; known OSV vulnerabilities,
+verified secrets, Trivy image vulnerabilities, and the dependency-review PR
+gate hard-fail. The VEX gate
 attaches a signed exploitability disposition to the artifact digest.
 
 ### Implementation
