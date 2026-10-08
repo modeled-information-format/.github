@@ -194,7 +194,7 @@ a hard merge gate.
 **Semgrep — `reusable-semgrep.yml` (`name: semgrep`).** Pattern-based SAST over
 bundled MCP-server/plugin source. Inputs: `directory` (default `.`), `config`
 (default registry packs `p/security-audit p/secrets p/command-injection`), and
-`semgrep-version` (default `1.139.0`, pinned, no range). Single job `sast-code`
+`semgrep-version` (default `1.180.0`, pinned, no range). Single job `sast-code`
 on `ubuntu-latest` with `contents: read`, `security-events: write`,
 `actions: read`. Semgrep installs from PyPI into an isolated venv (no
 third-party action, no allow-list entry, no login token). The scan is

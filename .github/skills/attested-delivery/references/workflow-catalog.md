@@ -303,7 +303,7 @@ Semgrep static analysis of bundled MCP-server / plugin source (command injection
 eval, unsafe deserialization, …). Soft-fail; complements CodeQL.
 
 - **Inputs:** `directory` (default `.`); `config` (default
-  `p/security-audit p/secrets p/command-injection`); `semgrep-version` (default `1.139.0`).
+  `p/security-audit p/secrets p/command-injection`); `semgrep-version` (default `1.180.0`).
 - **Outputs:** `sarif-artifact` = `sast-code-sarif`; `sarif-filename` = `semgrep.sarif`.
 - **Permissions:** job `sast-code` needs `contents: read`, `security-events: write`,
   `actions: read`.

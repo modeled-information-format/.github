@@ -44,7 +44,7 @@ on:
         description: 'Exact Semgrep version to install (pinned, no range)'
         required: false
         type: string
-        default: '1.139.0'
+        default: '1.180.0'
     outputs:
       sarif-artifact:
         description: 'Artifact name holding the Semgrep SARIF (attestation seam)'
