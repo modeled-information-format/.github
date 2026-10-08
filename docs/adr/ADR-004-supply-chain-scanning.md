@@ -208,7 +208,7 @@ workflow):
 
 - Job `osv-scanner` runs Google's OSV-Scanner inline via
   `google/osv-scanner-action/osv-scanner-action` and `…/osv-reporter-action`
-  (both `fa4ff678dd5d0a4fa3d628e57af8162873e93cd6`, v2.3.8), producing JSON →
+  (both `a345acffa64b0eaede81a3d9aae6141214d9c8fc`, v2.6.0), producing JSON →
   SARIF and uploading to the code-scanning hub. The scan step is
   `continue-on-error: true` — an independent second opinion against the OSV
   database, reported as a soft finding.
@@ -413,5 +413,23 @@ check as the merge gate; verified live secrets, Trivy image vulnerabilities,
 and the dependency-review PR gate hard-fail. Three of five gates avoid the org
 Actions allow-list by installing checksum-verified binaries / pip / `go
 install`. All Action `uses:` references are pinned to full 40-character SHAs.
+
+**Action Required:** None.
+
+### 2026-10-08
+
+**Status:** Compliant
+
+**Findings:**
+
+| Finding | Files | Lines | Assessment |
+|---------|-------|-------|------------|
+| `osv-scanner-action` + `osv-reporter-action` re-pinned to `a345acffa64b0eaede81a3d9aae6141214d9c8fc`, the `v2.6.0` release tag. The previous pins (`fa4ff678…`, then Dependabot's `a82132c…`) were untagged upstream commits mislabeled `v2.3.8` (the real `v2.3.8` tag is `9a498708…`), so the version comment was wrong and Dependabot followed branch commits instead of releases | `.github/workflows/reusable-sca-osv.yml` | L73-L88 | compliant |
+
+**Summary:** The OSV-Scanner pin now points at a real release tag, so the
+`# v2.6.0` comment is accurate and Dependabot tracks releases. v2.6.0 also
+fails the scan step when a scan does not complete; with the step's
+`continue-on-error: true`, an incomplete scan now surfaces at the reporter step
+instead of passing silently.
 
 **Action Required:** None.
