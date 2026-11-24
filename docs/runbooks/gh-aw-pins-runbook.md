@@ -17,6 +17,15 @@ to keep the org's standalone linters (actionlint, checkov, pin-check) green on
 gh-aw's generated output. The worked example throughout is `MIF`'s
 `daily-docs-review` workflow.
 
+> **Status (2026-11-24): no repo in the org currently runs gh-aw.** `MIF` was the
+> only adopter and removed it in
+> [MIF#352](https://github.com/modeled-information-format/MIF/pull/352): its one
+> agentic workflow had been disabled since July 2026 and ran on the Copilot engine,
+> which the org no longer has. The `MIF` examples below are kept as a historical
+> worked example; the files they name no longer exist in that repo. Use this
+> runbook if gh-aw is adopted again, and see
+> [Removing gh-aw from a repo](#removing-gh-aw-from-a-repo) for the reverse path.
+
 Mechanics it builds on (do not duplicate here):
 
 - Org branch-protection / required checks: `docs/runbooks/branch-protection-runbook.md`.
@@ -95,6 +104,30 @@ Steps:
    `.github/{agents,skills,aw}`) — these are **new CI workflows and config**, not
    just a fix. Treat the upgrade as a reviewable PR.
 4. Run the [validation checklist](#pre-push-validation-checklist).
+
+#### Upgrading across the 1.0 boundary (0.8x → 1.x)
+
+Observed running `gh aw upgrade` with the v1.2.3 CLI against `MIF` at v0.81.6
+(the upgrade was then abandoned in favour of removal). It is not a pin bump:
+
+- **`agentics-maintenance.yml` is deleted** when no workflow uses expiring safe
+  outputs and `.github/workflows/aw.json` does not enable maintenance. The file is
+  only generated when it is needed, so an active scheduled workflow disappears.
+- **The `copilot-web-fetch-removal` codemod drops `tools.web-fetch`** from
+  Copilot-engine workflows. A prompt that tells the agent to use `web-fetch` keeps
+  that text; review the prompt body, not just the frontmatter.
+- **The compiled lock gains a job-level `cache-mode` key** that standalone
+  actionlint rejects. Add `'unexpected key "cache-mode" for "job" section'` to the
+  scoped ignores in `.github/actionlint.yaml`.
+- **`.gitattributes` loses `merge=ours`** on `*.lock.yml`, and the manifest lists
+  two new optional secrets (`GH_AW_DEFAULT_OTLP_ENDPOINT`,
+  `GH_AW_DEFAULT_OTLP_HEADERS`).
+- **Check whether the target tag is a pre-release.** Dependabot proposed v1.2.3
+  while the latest stable release was v1.2.2; `gh aw upgrade` only considers
+  pre-releases with `--pre-releases`.
+- **Compile in a normal clone, not a linked git worktree.** In a worktree gh-aw
+  warns "Fuzzy schedule scattering without repository context" and emits a
+  different scattered `cron` than it does with a resolvable GitHub remote.
 
 ### Refresh stale pins / `actions-lock.json` drift
 
@@ -200,6 +233,34 @@ python3 -c 'import json; json.load(open(".github/aw/actions-lock.json"))'   # va
 Note: the org's `schema-check` / spec gates only run on PRs targeting
 `main`/`release/**`/`develop/**`. A PR based on a feature branch (a stacked PR) does
 **not** trigger them — run them locally too (see the repo's `CLAUDE.local.md`).
+
+## Removing gh-aw from a repo
+
+Dependabot keeps proposing `github/gh-aw-actions/*` bumps that cannot be merged
+without a recompile, so a repo that no longer runs its agentic workflows should
+drop gh-aw rather than leave the generated files behind. What `MIF` removed:
+
+| Path | Why it goes |
+| --- | --- |
+| `.github/workflows/<name>.md` and `<name>.lock.yml` | The workflow source and its compiled output |
+| `.github/workflows/agentics-maintenance.yml` | Generated maintenance workflow; runs on a schedule until deleted |
+| `.github/workflows/copilot-setup-steps.yml` | Scaffold; remove it when its only step beyond checkout installs the gh-aw CLI |
+| `.github/aw/` | Action and container pin cache |
+| `.github/agents/agentic-workflows.md`, `.github/skills/agentic-workflows/` | gh-aw agent and skill scaffolding (keep unrelated agents and skills) |
+| `.gitattributes` `*.lock.yml` line | Only marked the generated lock files |
+| `.github/actionlint.yaml` gh-aw entries | Scoped ignores and the `ubuntu-slim` runner label exist only for generated output |
+
+Steps:
+
+1. Delete the paths above. If `.gitattributes` or `.github/actionlint.yaml` hold
+   nothing else, delete the files.
+2. Search for leftovers: `git grep -n -i -E "gh-aw|agentic|ubuntu-slim|\.lock\.yml"`
+   should return nothing.
+3. Confirm no required status check on the default branch comes from a removed
+   workflow.
+4. Run `actionlint` from the repo root; it must exit 0 without the config file.
+5. Close the open `gh-aw-actions` Dependabot PRs as superseded once the removal
+   merges.
 
 ## Gotchas
 
