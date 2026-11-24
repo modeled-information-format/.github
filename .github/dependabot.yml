@@ -10,3 +10,9 @@ updates:
       - "area/ci"
     commit-message:
       prefix: "ci"
+    groups:
+      # init/analyze/upload-sarif must move together: CodeQL fails the job when
+      # steps in one workflow run different codeql-action versions.
+      codeql-action:
+        patterns:
+          - "github/codeql-action/*"
